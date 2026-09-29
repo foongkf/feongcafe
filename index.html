@@ -252,8 +252,7 @@ body{
   padding:16px 0 calc(var(--safe-bottom) + 44px);
 }
 .group{
-  max-width:1400px;
-  margin:0 auto 22px;
+  margin-bottom:22px;
   scroll-margin-top:140px;
 }
 .group-head{
@@ -277,20 +276,31 @@ body{
   padding:2px 9px;
   font-weight:600;
 }
-
-/* ---------- 平铺网格（无横向滑动） ---------- */
 .rail{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  display:flex;
   gap:12px;
+  overflow-x:auto;
+  overflow-y:hidden;
   padding:4px 18px 14px;
+  scroll-snap-type:x proximity;
+  scroll-padding-left:18px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:#ddcbba transparent;
+}
+.rail::-webkit-scrollbar{height:6px;}
+.rail::-webkit-scrollbar-track{background:transparent;}
+.rail::-webkit-scrollbar-thumb{
+  background:#ddcbba;
+  border-radius:999px;
 }
 
 /* ---------- 卡片 ---------- */
 .card{
   position:relative;
-  width:100%;
-  min-width:0;
+  flex:0 0 auto;
+  width:clamp(200px,72vw,272px);
+  scroll-snap-align:start;
   display:flex;
   flex-direction:column;
   background:var(--card);
@@ -406,6 +416,27 @@ body{
   background:#fff2d8;
   border-color:#f0d49b;
   color:#b8791f;
+}
+
+/* ---------- 平铺模式（新增） ---------- */
+#content.grid-mode .rail{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(156px,1fr));
+  gap:12px;
+  overflow:visible;
+  scroll-snap-type:none;
+  scroll-padding-left:0;
+  padding:4px 18px 14px;
+  scrollbar-width:none;
+}
+#content.grid-mode .rail::-webkit-scrollbar{display:none;}
+#content.grid-mode .card{
+  width:auto;
+  min-width:0;
+  scroll-snap-align:none;
+}
+#content.grid-mode .card-desc{
+  -webkit-line-clamp:6;
 }
 
 /* 高亮闪烁 */
@@ -587,15 +618,18 @@ body{
   .hero h1{font-size:24px;}
   .hero .sub{font-size:13.5px;}
   .sticky-wrap{padding:12px 20px 10px;}
+  .rail{padding:4px 22px 16px;gap:14px;}
   .group-head{padding:0 22px 10px;}
   .group-head h2{font-size:18px;}
-  .rail{
-    gap:14px;
-    padding:4px 22px 16px;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  }
+  .card{width:280px;}
   .card-name{font-size:17px;}
   .hint-card{margin:34px 22px;}
+
+  #content.grid-mode .rail{
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:14px;
+    padding:4px 22px 16px;
+  }
 }
 @media (min-width:1024px){
   .hero{padding:calc(var(--safe-top) + 34px) 24px 32px;}
@@ -605,19 +639,18 @@ body{
   .toolbar{max-width:1100px;margin-left:auto;margin-right:auto;justify-content:center;}
   .cat-panel{max-width:1100px;margin-left:auto;margin-right:auto;justify-content:center;}
   .cat-panel.open{margin-top:12px;}
+  .rail{padding:4px 26px 18px;}
   .group-head{padding:0 26px 12px;}
-  .rail{
-    gap:16px;
-    padding:4px 26px 18px;
-    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  }
+  .card{width:290px;}
   .card:hover{
     transform:translateY(-3px);
     box-shadow:0 12px 28px rgba(122,86,58,.16);
   }
-}
-@media (min-width:1500px){
-  .rail{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+
+  #content.grid-mode .rail{
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    padding:4px 26px 18px;
+  }
 }
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
@@ -650,6 +683,7 @@ body{
     <button id="btnAll" class="tool-btn primary" type="button">全部 <span class="caret">▾</span></button>
     <button id="btnOpenAll" class="tool-btn" type="button">打开所有</button>
     <button id="btnRandom" class="tool-btn" type="button">🎲 随机</button>
+    <button id="btnGrid" class="tool-btn" type="button">▦ 平铺</button>
   </div>
   <div id="catPanel" class="cat-panel"></div>
 </div>
@@ -665,6 +699,7 @@ body{
   /* ====================== 配置 ====================== */
   var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv";
   var FAV_KEY = "feong_cafe_favs_v1";
+  var GRID_KEY = "feong_cafe_grid_v1";
   var PULL_THRESHOLD = 64;
 
   /* ====================== 状态 ====================== */
@@ -674,6 +709,7 @@ body{
   var panelOpen = false;
   var searchTerm = "";
   var refreshing = false;
+  var gridView = false;
   var favorites = new Set();
 
   try {
@@ -685,6 +721,12 @@ body{
     favorites = new Set();
   }
 
+  try {
+    gridView = localStorage.getItem(GRID_KEY) === "1";
+  } catch (e) {
+    gridView = false;
+  }
+
   /* ====================== DOM ====================== */
   var contentEl = document.getElementById("content");
   var subInfoEl = document.getElementById("subInfo");
@@ -693,6 +735,7 @@ body{
   var btnAll = document.getElementById("btnAll");
   var btnOpenAll = document.getElementById("btnOpenAll");
   var btnRandom = document.getElementById("btnRandom");
+  var btnGrid = document.getElementById("btnGrid");
   var catPanel = document.getElementById("catPanel");
   var toTopBtn = document.getElementById("toTop");
   var pullEl = document.getElementById("pullIndicator");
@@ -724,6 +767,12 @@ body{
     try {
       localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favorites)));
     } catch (e) { /* 忽略隐私模式下的写入失败 */ }
+  }
+
+  function saveGrid() {
+    try {
+      localStorage.setItem(GRID_KEY, gridView ? "1" : "0");
+    } catch (e) { /* 忽略 */ }
   }
 
   /* ====================== CSV 解析 ====================== */
@@ -926,6 +975,9 @@ body{
   }
 
   function render() {
+    /* 平铺 / 横滑 布局开关 */
+    contentEl.classList.toggle("grid-mode", gridView);
+
     if (!allData.length) return;
 
     var q = searchTerm.trim().toLowerCase();
@@ -1098,15 +1150,9 @@ body{
     panelOpen = !panelOpen;
     catPanel.classList.toggle("open", panelOpen);
     btnAll.classList.toggle("open", panelOpen);
-
-    if (panelOpen) {
-      /* 展开分类目录时，默认展示全部分类的卡片（平铺） */
+    if (panelOpen && activeCategory !== "全部") {
       activeCategory = "全部";
-      openAll = true;
-      btnOpenAll.classList.add("primary");
-      btnOpenAll.textContent = "收起全部";
     }
-
     renderCats();
     render();
   });
@@ -1119,15 +1165,9 @@ body{
     activeCategory = cat;
 
     if (cat !== "全部") {
-      /* 选中具体分类：只显示该分类的卡片 */
       openAll = false;
       btnOpenAll.classList.remove("primary");
       btnOpenAll.textContent = "打开所有";
-    } else {
-      /* 点击「全部」：显示所有分类的卡片 */
-      openAll = true;
-      btnOpenAll.classList.add("primary");
-      btnOpenAll.textContent = "收起全部";
     }
 
     renderCats();
@@ -1162,6 +1202,30 @@ body{
     render();
   });
 
+  /* ====================== 交互：平铺 / 横滑 切换 ====================== */
+  function applyGridBtn() {
+    btnGrid.classList.toggle("primary", gridView);
+    btnGrid.textContent = gridView ? "▤ 横滑" : "▦ 平铺";
+    btnGrid.setAttribute("aria-pressed", gridView ? "true" : "false");
+  }
+
+  btnGrid.addEventListener("click", function () {
+    gridView = !gridView;
+    saveGrid();
+    applyGridBtn();
+
+    /* 切到平铺时若当前没有任何卡片展示，自动展开全部，避免空屏 */
+    if (gridView && !openAll && activeCategory === "全部" && !searchTerm.trim()) {
+      openAll = true;
+      btnOpenAll.classList.add("primary");
+      btnOpenAll.textContent = "收起全部";
+      renderCats();
+    }
+
+    render();
+    showToast(gridView ? "已切换为平铺显示" : "已切换为横向滑动");
+  });
+
   /* ====================== 交互：随机 ====================== */
   btnRandom.addEventListener("click", function () {
     if (!allData.length) return;
@@ -1184,7 +1248,7 @@ body{
         var el = contentEl.querySelector('.card[data-idx="' + idx + '"]');
         if (!el) return;
         try {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
         } catch (err) {
           el.scrollIntoView();
         }
@@ -1373,9 +1437,15 @@ body{
     pullDist = 0;
   }, { passive: true });
 
+  /* 桌面端 / 鼠标滚轮在页面顶部时不做处理，避免影响正常滚动 */
+
   /* ====================== 启动 ====================== */
+  applyGridBtn();
   setPull(0);
   loadData(true);
+
+  /* 页面重新可见时（从后台切回）不自动刷新，避免打断操作；
+     如需刷新可下拉或点击重试按钮。 */
 
 })();
 </script>
