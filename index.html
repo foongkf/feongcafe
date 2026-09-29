@@ -21,10 +21,6 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
-
-  /* hidden 属性必须能压过下面所有 display 声明 */
-  [hidden]{display:none !important;}
-
   body{
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     background:var(--bg);
@@ -87,7 +83,6 @@
   }
   .search input::placeholder{color:#b6a698;}
   .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-
   .btn-random{
     flex:0 0 auto;
     padding:11px 17px;border-radius:12px;border:none;
@@ -98,16 +93,6 @@
     box-shadow:0 2px 8px rgba(168,104,60,.22);
   }
   .btn-random:active{opacity:.86;transform:scale(.98);}
-
-  .btn-soft{
-    flex:0 0 auto;
-    padding:11px 15px;border-radius:12px;
-    border:1px solid var(--border);background:#fff;color:var(--text);
-    font-size:14.5px;font-weight:600;font-family:inherit;
-    cursor:pointer;white-space:nowrap;
-    transition:background .15s, border-color .15s;
-  }
-  .btn-soft:active{background:#f3ece5;}
 
   /* ---------- 分类 chips ---------- */
   .chips{
@@ -143,102 +128,113 @@
   }
   .chip.fav.active{background:#e0574a;border-color:#e0574a;box-shadow:0 2px 8px rgba(224,87,74,.25);}
 
-  /* ================= 分类折叠列表 ================= */
-  .cat-list{
+  /* ---------- 分类区块容器 ---------- */
+  .cat-wrap{
     max-width:1200px;
     margin:0 auto;
     padding:0 16px 32px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
   }
 
-  .cat-group{width:100%;}
-
-  .cat-head-wrap{
-    margin:0;
-    font-size:inherit;
-    font-weight:inherit;
-    line-height:inherit;
+  .cat-section{
+    margin-bottom:30px;
   }
+  .cat-section:last-child{margin-bottom:8px;}
 
-  .cat-header{
+  .cat-head{
     display:flex;
-    align-items:center;
+    align-items:baseline;
     gap:10px;
-    width:100%;
-    padding:13px 15px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:14px;
-    font-family:inherit;
-    font-size:15px;
-    font-weight:650;
-    color:var(--text);
-    cursor:pointer;
-    text-align:left;
-    transition:background .15s, border-color .15s, box-shadow .15s;
-    -webkit-appearance:none;
-    appearance:none;
+    padding:0 2px 11px;
   }
-  @media (hover:hover){
-    .cat-header:hover{background:#fffdfa;border-color:#e3d5c6;box-shadow:0 2px 10px rgba(120,80,50,.06);}
-  }
-  .cat-header:active{background:#f7f1ea;}
-  .cat-header:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-
-  .cat-chevron{
-    flex:0 0 auto;
-    width:16px;
-    text-align:center;
-    font-size:12px;
-    line-height:1;
-    color:var(--muted);
-    display:inline-block;
-    transition:transform .3s cubic-bezier(.4,0,.2,1);
-  }
-  .cat-header[aria-expanded="true"] .cat-chevron{transform:rotate(90deg);}
-
-  .cat-name{
-    flex:1 1 auto;
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    letter-spacing:.2px;
-  }
-
-  .cat-count{
-    flex:0 0 auto;
-    font-size:12.5px;
+  .cat-title{
+    font-size:17px;
     font-weight:700;
-    line-height:1;
-    padding:5px 10px;
+    margin:0;
+    letter-spacing:.2px;
+    color:var(--text);
+    line-height:1.3;
+  }
+  .cat-count{
+    font-size:12.5px;
+    color:var(--muted);
+    font-weight:600;
+    background:#f2ece5;
+    padding:3px 10px;
     border-radius:999px;
-    background:var(--accent-soft);
-    color:var(--accent);
-    font-variant-numeric:tabular-nums;
+    line-height:1.35;
+    white-space:nowrap;
   }
 
-  /* 折叠动画：grid-template-rows 0fr <-> 1fr */
-  .cat-body{
-    display:grid;
-    grid-template-rows:1fr;
-    transition:grid-template-rows .32s cubic-bezier(.4,0,.2,1);
-  }
-  .cat-body.is-collapsed{grid-template-rows:0fr;}
-  .cat-body-inner{
-    overflow:hidden;
-    min-height:0;
-  }
-
-  /* 分类内部的响应式 Grid */
-  .cards-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(258px, 1fr));
+  /* 预览：横向滑动容器 */
+  .cat-scroller{
+    display:flex;
     gap:14px;
-    padding-top:12px;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    padding:2px 2px 14px;
+    scrollbar-width:thin;
+    scrollbar-color:#ddd0c2 transparent;
   }
+  .cat-scroller::-webkit-scrollbar{height:6px;}
+  .cat-scroller::-webkit-scrollbar-thumb{background:#ddd0c2;border-radius:3px;}
+  .cat-scroller::-webkit-scrollbar-track{background:transparent;}
+
+  /* 预览态卡片宽度：移动 1.2 张 / 平板 2.5 张 / 桌面 4 张 */
+  .cat-scroller > .card{
+    flex:0 0 auto;
+    width:82%;
+    scroll-snap-align:start;
+  }
+  @media (min-width:600px){
+    .cat-scroller > .card{width:38%;}
+  }
+  @media (min-width:1024px){
+    .cat-scroller > .card{width:23%;}
+  }
+
+  /* 展开态：变成响应式 Grid，全部卡片显示 */
+  .cat-section[data-expanded="true"] .cat-scroller{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:14px;
+    overflow:visible;
+    padding-bottom:2px;
+  }
+  .cat-section[data-expanded="true"] .cat-scroller > .card{
+    width:auto;
+    flex:initial;
+    scroll-snap-align:none;
+  }
+
+  /* 查看更多 / 收起 按钮 */
+  .cat-more{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:2px;
+    padding:9px 16px;
+    border-radius:11px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--accent);
+    font-size:13.5px;
+    font-weight:600;
+    font-family:inherit;
+    cursor:pointer;
+    transition:background .15s, border-color .15s, color .15s;
+    line-height:1;
+  }
+  .cat-more:hover{background:var(--accent-soft);border-color:#e8d3c0;}
+  .cat-more:active{background:#f0e2d6;}
+  .cat-more .arrow{
+    font-size:11px;
+    transition:transform .2s;
+    display:inline-block;
+    line-height:1;
+  }
+  .cat-more[aria-expanded="true"] .arrow{transform:rotate(180deg);}
 
   /* ---------- 卡片 ---------- */
   .card{
@@ -294,7 +290,6 @@
 
   /* ---------- 状态 ---------- */
   .state{
-    width:100%;
     text-align:center;
     padding:64px 20px;
     color:var(--muted);
@@ -387,21 +382,16 @@
     .brand-text h1{font-size:15.5px;}
     .logo{font-size:21px;}
     .hdr-btn{padding:8px 11px;font-size:13px;}
-    .cat-list{padding:0 12px 28px;}
+    .cat-wrap{padding:0 12px 28px;}
+    .cat-section{margin-bottom:26px;}
+    .cat-title{font-size:16px;}
     .toolbar{padding:12px 12px 2px;}
     .chips{padding:10px 12px 12px;}
     .app-header{padding-left:12px;padding-right:12px;}
-    .btn-random,
-    .btn-soft{flex:1 1 0;min-width:0;padding-left:10px;padding-right:10px;font-size:13.5px;}
-    .cards-grid{grid-template-columns:1fr;gap:12px;}
-    .cat-header{font-size:14.5px;padding:12px 13px;}
-  }
-
-  /* ---------- 无障碍：减少动画 ---------- */
-  @media (prefers-reduced-motion: reduce){
-    .cat-body,
-    .cat-chevron,
-    .card{transition:none !important;}
+    .btn-random{flex:1 1 100%;}
+    .cat-scroller{gap:12px;}
+    .cat-section[data-expanded="true"] .cat-scroller{gap:12px;}
+    .cat-more{width:100%;justify-content:center;}
   }
 </style>
 </head>
@@ -424,12 +414,11 @@
     <input id="searchInput" type="search" placeholder="搜索名字、地区、分类或描述…" autocomplete="off" enterkeyhint="search">
   </div>
   <button class="btn-random" id="randomBtn" type="button">🎲 随机挑一间</button>
-  <button class="btn-soft" id="toggleAllBtn" type="button">展开全部</button>
 </div>
 
 <div class="chips" id="chips"></div>
 
-<main class="cat-list" id="grid"></main>
+<main class="cat-wrap" id="grid"></main>
 
 <footer class="footer">
   数据来自 Google Sheet，打开页面即自动同步最新内容<br>
@@ -446,14 +435,17 @@
   'use strict';
 
   /* ================= 配置 ================= */
+  // Google Sheet 发布为 CSV 的链接（自动由 pubhtml 转换而来）
   var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv';
 
+  // 直接读取失败时的备用代理（跨域兜底）
   var PROXIES = [
     function (u) { return u; },
     function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
     function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); }
   ];
 
+  // 分类显示顺序（不在此列表内的分类会自动排到后面）
   var CAT_ORDER = ['cafe','dessert','bar','western','thai','korean','japanese',
                    'kopitiam','nyonya','chinese','asian','fine dine','hatyai','其它'];
 
@@ -472,20 +464,18 @@
   var favs = loadFavs();
   var currentId = null;
 
-  // 手动折叠状态：{ categoryKey: true/false }，筛选条件变化时清空
-  var manualState = {};
-  var lastFilterSig = null;
+  // 记录每个分类是否已展开（key 为小写分类名）
+  var expandedCats = {};
 
   /* ================= DOM ================= */
-  var gridEl       = document.getElementById('grid');
-  var chipsEl      = document.getElementById('chips');
-  var countEl      = document.getElementById('countText');
-  var searchEl     = document.getElementById('searchInput');
-  var randomBtn    = document.getElementById('randomBtn');
-  var refreshBtn   = document.getElementById('refreshBtn');
-  var toggleAllBtn = document.getElementById('toggleAllBtn');
-  var modalEl      = document.getElementById('modal');
-  var modalPanel   = document.getElementById('modalPanel');
+  var gridEl      = document.getElementById('grid');
+  var chipsEl     = document.getElementById('chips');
+  var countEl     = document.getElementById('countText');
+  var searchEl    = document.getElementById('searchInput');
+  var randomBtn   = document.getElementById('randomBtn');
+  var refreshBtn  = document.getElementById('refreshBtn');
+  var modalEl     = document.getElementById('modal');
+  var modalPanel  = document.getElementById('modalPanel');
 
   /* ================= 工具函数 ================= */
   function esc(s) {
@@ -503,6 +493,7 @@
       .replace(/[\s\u3000_\-—–:：·.。/\\()（）\[\]]/g, '');
   }
 
+  // 处理小红书链接（允许只填 www.xxx 或 xhslink.com/xxx）
   function normalizeUrl(u) {
     u = String(u == null ? '' : u).trim();
     if (!u) return '';
@@ -510,6 +501,14 @@
     if (/^(www\.|xhslink\.|xiaohongshu\.|m\.xiaohongshu\.)/i.test(u)) return 'https://' + u;
     if (/\.(com|cn|net|org|me|cc|link)\b/i.test(u)) return 'https://' + u;
     return '';
+  }
+
+  // 当前视口下，一个分类默认「一屏能看见」多少张卡片
+  function visibleCount() {
+    var w = window.innerWidth;
+    if (w < 600) return 1;    // 移动端：露出约 1.2 张
+    if (w < 1024) return 2;   // 平板：露出约 2.5 张
+    return 4;                 // 桌面：露出约 4 张
   }
 
   /* ================= 本地收藏 ================= */
@@ -525,7 +524,7 @@
   function saveFavs() {
     try {
       localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favs)));
-    } catch (e) { /* 忽略隐私模式写入失败 */ }
+    } catch (e) { /* 忽略隐私模式下的写入失败 */ }
   }
 
   /* ================= CSV 解析 ================= */
@@ -704,11 +703,12 @@
       var active;
       if (v === '__fav__') active = state.onlyFav;
       else active = (state.cat === v);
-      chips[i].classList.toggle('active', active);
+      if (active) chips[i].classList.add('active');
+      else chips[i].classList.remove('active');
     }
   }
 
-  /* ================= 渲染：卡片 ================= */
+  /* ================= 渲染：卡片 HTML ================= */
   function cardHTML(it) {
     var isFav = favs.has(it.id);
     var html = '<article class="card" data-id="' + esc(it.id) + '">';
@@ -739,35 +739,11 @@
     return html;
   }
 
-  /* ================= 分组 + 折叠渲染 ================= */
-  function currentFilterSig() {
-    return state.cat + '::' + (state.onlyFav ? '1' : '0') + '::' + (state.q.trim() === '' ? '0' : '1');
-  }
-
-  function groupItems(items) {
-    var map = {};
-    var groups = [];
-    items.forEach(function (it) {
-      var key = it.categoryKey || '其它';
-      if (!map[key]) {
-        map[key] = { key: key, name: it.category || '其它', items: [] };
-        groups.push(map[key]);
-      }
-      map[key].items.push(it);
-    });
-    groups.sort(function (a, b) {
-      var ia = CAT_ORDER.indexOf(a.key);
-      var ib = CAT_ORDER.indexOf(b.key);
-      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
-    });
-    return groups;
-  }
-
+  /* ================= 渲染：主渲染 ================= */
   function render() {
     if (state.loading) {
       gridEl.innerHTML = '<div class="state"><span class="loading-dot"></span>正在读取咖啡馆收藏…</div>';
       updateCount();
-      updateToggleAllLabel();
       return;
     }
 
@@ -777,7 +753,6 @@
         '<br><span style="font-size:13px">请检查网络，或确认 Google Sheet 已发布为 CSV</span>' +
         '<br><button type="button" id="retryBtn">重新加载</button></div>';
       updateCount();
-      updateToggleAllLabel();
       return;
     }
 
@@ -787,55 +762,65 @@
               : (state.all.length ? '没有找到符合条件的咖啡馆 🥲' : '表格里还没有数据');
       gridEl.innerHTML = '<div class="state"><span class="big">☕</span>' + esc(msg) + '</div>';
       updateCount();
-      updateToggleAllLabel();
       return;
     }
 
-    var groups = groupItems(state.view);
+    /* ---- 按分类分组 ---- */
+    var groupMap = {};
+    var groupOrder = [];
+    state.view.forEach(function (it) {
+      var key = it.category || '其它';
+      var k = key.toLowerCase();
+      if (!groupMap[k]) {
+        groupMap[k] = { name: key, items: [] };
+        groupOrder.push(k);
+      }
+      groupMap[k].items.push(it);
+    });
 
-    // 有搜索/收藏筛选/指定分类时，默认自动展开；否则默认全部折叠
-    var autoExpand = state.q.trim() !== '' || state.onlyFav || state.cat !== '全部';
+    groupOrder.sort(function (a, b) {
+      var ia = CAT_ORDER.indexOf(a);
+      var ib = CAT_ORDER.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
 
+    var visN = visibleCount();
     var html = '';
-    for (var i = 0; i < groups.length; i++) {
-      var g = groups[i];
-      var panelId = 'cat-panel-' + i;
-      var expanded;
-      if (Object.prototype.hasOwnProperty.call(manualState, g.key)) {
-        expanded = manualState[g.key];
-      } else {
-        expanded = autoExpand;
+
+    groupOrder.forEach(function (k) {
+      var g = groupMap[k];
+      var count = g.items.length;
+      var expanded = !!expandedCats[k];
+      var showMore = count > visN;
+
+      html += '<section class="cat-section" data-cat="' + esc(k) + '" data-expanded="' +
+              (expanded ? 'true' : 'false') + '">';
+
+      // 标题行（始终可见，不折叠）
+      html += '<div class="cat-head">';
+      html += '<h2 class="cat-title">' + esc(g.name) + '</h2>';
+      html += '<span class="cat-count">' + count + ' 家</span>';
+      html += '</div>';
+
+      // 卡片容器（预览横向滚动 / 展开响应式 Grid）
+      html += '<div class="cat-scroller">';
+      g.items.forEach(function (it) { html += cardHTML(it); });
+      html += '</div>';
+
+      // 查看更多按钮
+      if (showMore) {
+        html += '<button type="button" class="cat-more" data-cat="' + esc(k) +
+                '" aria-expanded="' + (expanded ? 'true' : 'false') + '">' +
+                '<span class="txt">' + (expanded ? '收起' : '查看更多（共 ' + count + ' 家）') + '</span>' +
+                '<span class="arrow" aria-hidden="true">▾</span>' +
+                '</button>';
       }
-
-      html += '<section class="cat-group" data-cat="' + esc(g.key) + '">';
-
-      // 标题 = button（点击标题即展开/收起）
-      html += '<h2 class="cat-head-wrap">';
-      html += '<button type="button" class="cat-header" aria-expanded="' + (expanded ? 'true' : 'false') +
-              '" aria-controls="' + panelId + '">';
-      html += '<span class="cat-chevron" aria-hidden="true">▸</span>';
-      html += '<span class="cat-name">' + esc(g.name) + '</span>';
-      html += '<span class="cat-count">' + g.items.length + '</span>';
-      html += '</button>';
-      html += '</h2>';
-
-      // 折叠面板
-      html += '<div class="cat-body' + (expanded ? '' : ' is-collapsed') + '" id="' + panelId +
-              '" role="region" aria-label="' + esc(g.name) + ' 分类下的咖啡馆"' +
-              (expanded ? '' : ' hidden') + '>';
-      html += '<div class="cat-body-inner">';
-      html += '<div class="cards-grid">';
-      for (var j = 0; j < g.items.length; j++) {
-        html += cardHTML(g.items[j]);
-      }
-      html += '</div></div></div>';
 
       html += '</section>';
-    }
+    });
 
     gridEl.innerHTML = html;
     updateCount();
-    updateToggleAllLabel();
   }
 
   function updateCount() {
@@ -850,70 +835,52 @@
     }
   }
 
-  /* ================= 折叠 / 展开动画 ================= */
-  function animateToggle(header, body, open) {
-    header.setAttribute('aria-expanded', open ? 'true' : 'false');
+  /* ================= 分类展开/收起动画 ================= */
+  function toggleSection(section, btn, key, expand) {
+    var scroller = section.querySelector('.cat-scroller');
+    if (!scroller) return;
 
-    if (open) {
-      body.hidden = false;
-      // 强制一次重排，让 0fr 先落地，再过渡到 1fr
-      void body.offsetHeight;
-      body.classList.remove('is-collapsed');
-    } else {
-      body.classList.add('is-collapsed');
+    // 记录切换前的高度
+    var fromH = scroller.getBoundingClientRect().height;
 
-      var finished = false;
-      var finish = function () {
-        if (finished) return;
-        finished = true;
-        body.removeEventListener('transitionend', onEnd);
-        clearTimeout(timer);
-        if (body.classList.contains('is-collapsed')) body.hidden = true;
-      };
-      var onEnd = function (e) {
-        if (e.target === body &&
-            (e.propertyName === 'grid-template-rows' || e.propertyName === '')) {
-          finish();
-        }
-      };
-      var timer = setTimeout(finish, 420);
-      body.addEventListener('transitionend', onEnd);
+    // 切换布局状态
+    section.setAttribute('data-expanded', expand ? 'true' : 'false');
+    expandedCats[key] = expand;
+
+    // 切换后高度
+    var toH = scroller.getBoundingClientRect().height;
+
+    // 更新按钮文字与 aria
+    if (btn) {
+      btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
+      var txt = btn.querySelector('.txt');
+      if (txt) {
+        txt.textContent = expand ? '收起' : ('查看更多（共 ' + section.querySelectorAll('.card').length + ' 家）');
+      }
     }
-  }
 
-  function setGroupOpen(groupEl, open) {
-    var header = groupEl.querySelector('.cat-header');
-    var body = groupEl.querySelector('.cat-body');
-    if (!header || !body) return;
-    var isOpen = header.getAttribute('aria-expanded') === 'true';
-    if (isOpen === open) return;
-    manualState[groupEl.getAttribute('data-cat')] = open;
-    animateToggle(header, body, open);
-  }
+    // 高度无明显变化时不动画
+    if (Math.abs(toH - fromH) < 1) return;
 
-  function updateToggleAllLabel() {
-    var headers = gridEl.querySelectorAll('.cat-header');
-    if (!headers.length) {
-      toggleAllBtn.style.display = 'none';
-      return;
-    }
-    toggleAllBtn.style.display = '';
-    var allOpen = true;
-    for (var i = 0; i < headers.length; i++) {
-      if (headers[i].getAttribute('aria-expanded') !== 'true') { allOpen = false; break; }
-    }
-    toggleAllBtn.textContent = allOpen ? '折叠全部' : '展开全部';
+    // 执行高度过渡动画
+    scroller.style.height = fromH + 'px';
+    scroller.style.overflow = 'hidden';
+    scroller.style.transition = 'height .32s cubic-bezier(.2,.85,.3,1)';
+
+    // 强制重排，确保起始高度生效
+    void scroller.offsetHeight;
+
+    scroller.style.height = toH + 'px';
+
+    setTimeout(function () {
+      scroller.style.height = '';
+      scroller.style.overflow = '';
+      scroller.style.transition = '';
+    }, 340);
   }
 
   /* ================= 筛选 ================= */
   function applyFilter() {
-    // 筛选条件「类型」变化时清空手动折叠状态，让默认逻辑接管
-    var sig = currentFilterSig();
-    if (sig !== lastFilterSig) {
-      manualState = {};
-      lastFilterSig = sig;
-    }
-
     var q = state.q.trim().toLowerCase();
     var cat = state.cat.toLowerCase();
 
@@ -1003,25 +970,11 @@
   }
 
   /* ================= 事件绑定 ================= */
-  // 主区域：折叠标题 / 收藏按钮 / 重试 / 卡片点击
+  // 主内容区域（卡片、收藏、查看更多、重试）
   gridEl.addEventListener('click', function (e) {
     var target = e.target;
 
-    // 1) 点击分类标题 → 展开 / 收起
-    var header = target.closest ? target.closest('.cat-header') : null;
-    if (header) {
-      e.preventDefault();
-      var groupEl = header.closest('.cat-group');
-      var body = groupEl.querySelector('.cat-body');
-      var isOpen = header.getAttribute('aria-expanded') === 'true';
-      var next = !isOpen;
-      manualState[groupEl.getAttribute('data-cat')] = next;
-      animateToggle(header, body, next);
-      updateToggleAllLabel();
-      return;
-    }
-
-    // 2) 收藏
+    // 1) 收藏按钮
     var favBtn = target.closest ? target.closest('[data-fav]') : null;
     if (favBtn) {
       e.preventDefault();
@@ -1030,12 +983,27 @@
       return;
     }
 
-    // 3) 重试
+    // 2) 查看更多 / 收起
+    var moreBtn = target.closest ? target.closest('.cat-more') : null;
+    if (moreBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      var key = moreBtn.getAttribute('data-cat');
+      var section = moreBtn.closest('.cat-section');
+      if (!section) return;
+      var expand = !expandedCats[key];
+      toggleSection(section, moreBtn, key, expand);
+      return;
+    }
+
+    // 3) 让真实链接正常跳转
+    if (target.closest && target.closest('a')) return;
+
+    // 4) 重试按钮
     var retry = target.closest ? target.closest('#retryBtn') : null;
     if (retry) { load(); return; }
 
-    // 4) 卡片 → 弹窗
-    if (target.closest && target.closest('a')) return;
+    // 5) 打开详情弹窗
     var card = target.closest ? target.closest('.card') : null;
     if (card) openModal(card.getAttribute('data-id'));
   });
@@ -1074,7 +1042,7 @@
     applyFilter();
   });
 
-  // 搜索（防抖）
+  // 搜索
   var searchTimer = null;
   searchEl.addEventListener('input', function () {
     var val = searchEl.value;
@@ -1096,27 +1064,24 @@
     openModal(pick.id);
   });
 
-  // 展开全部 / 折叠全部
-  toggleAllBtn.addEventListener('click', function () {
-    var headers = Array.prototype.slice.call(gridEl.querySelectorAll('.cat-header'));
-    if (!headers.length) return;
-
-    var allOpen = headers.every(function (h) {
-      return h.getAttribute('aria-expanded') === 'true';
-    });
-    var target = !allOpen;
-
-    headers.forEach(function (h) {
-      var groupEl = h.closest('.cat-group');
-      if (!groupEl) return;
-      setGroupOpen(groupEl, target);
-    });
-
-    updateToggleAllLabel();
+  // 刷新
+  refreshBtn.addEventListener('click', function () {
+    load();
   });
 
-  // 刷新
-  refreshBtn.addEventListener('click', function () { load(); });
+  // 视口尺寸变化：重新计算「查看更多」按钮的显示条件
+  var resizeTimer = null;
+  var lastVisN = visibleCount();
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      var n = visibleCount();
+      if (n !== lastVisN) {
+        lastVisN = n;
+        render();
+      }
+    }, 250);
+  });
 
   /* ================= 加载流程 ================= */
   function load() {
@@ -1142,7 +1107,7 @@
     });
   }
 
-  // 页面重新可见且超过 5 分钟，自动同步
+  // 页面重新可见时自动同步（超过 5 分钟）
   var lastLoad = Date.now();
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && Date.now() - lastLoad > 5 * 60 * 1000 && !state.loading) {
