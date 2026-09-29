@@ -1,1866 +1,1403 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FEONG的咖啡馆收藏集</title>
-<meta name="theme-color" content="#8B5E3C">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="咖啡馆收藏">
-<meta name="description" content="FEONG 的个人咖啡馆收藏集，浏览、筛选、导航与打卡。">
-<style>
-  :root{
-    --bg:#FBF6F0;
-    --card:#FFFFFF;
-    --primary:#8B5E3C;
-    --primary-dark:#6F4A2E;
-    --accent:#D9A87C;
-    --text:#3B2F2A;
-    --muted:#8A7A70;
-    --border:#EFE4D8;
-    --shadow:0 2px 10px rgba(139,94,60,.08);
-    --shadow-lg:0 10px 32px rgba(139,94,60,.20);
-    --radius:16px;
-  }
-
-  *,*::before,*::after{ box-sizing:border-box; }
-
-  html{ -webkit-text-size-adjust:100%; }
-
-  body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    overscroll-behavior-y:contain;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;
-    line-height:1.5;
-  }
-
-  body.modal-open{ overflow:hidden; }
-
-  .wrap{ width:100%; max-width:920px; margin:0 auto; }
-
-  /* ---------- 顶部 ---------- */
-  .app-header{
-    background:linear-gradient(180deg,#F6EBE1 0%,#FBF6F0 100%);
-    padding:calc(18px + env(safe-area-inset-top)) 16px 10px;
-  }
-
-  .header-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-  }
-
-  h1{
-    font-size:19px;
-    margin:0;
-    letter-spacing:.4px;
-    color:var(--primary-dark);
-    font-weight:800;
-  }
-
-  .subtitle{
-    margin:5px 0 0;
-    font-size:12.5px;
-    color:var(--muted);
-  }
-
-  .header-actions{
-    display:flex;
-    gap:8px;
-    flex:0 0 auto;
-  }
-
-  .icon-btn{
-    width:38px;height:38px;
-    border-radius:50%;
-    border:1px solid var(--border);
-    background:#fff;
-    color:var(--primary);
-    font-size:18px;
-    line-height:1;
-    cursor:pointer;
-    box-shadow:var(--shadow);
-    transition:transform .3s ease, background .2s;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .icon-btn:active{ transform:scale(.94); }
-  .icon-btn.spinning{ animation:spin .9s linear infinite; }
-
-  .search-box{ position:relative; margin-top:14px; }
-
-  .search-box input{
-    width:100%;
-    height:44px;
-    border-radius:22px;
-    border:1px solid var(--border);
-    background:#fff;
-    padding:0 42px 0 40px;
-    font-size:15px;
-    color:var(--text);
-    outline:none;
-    box-shadow:var(--shadow);
-    transition:border-color .2s, box-shadow .2s;
-    font-family:inherit;
-    -webkit-appearance:none;
-  }
-  .search-box input::-webkit-search-cancel-button{ display:none; }
-  .search-box input:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(217,168,124,.25);
-  }
-
-  .search-icon{
-    position:absolute;left:14px;top:50%;transform:translateY(-50%);
-    font-size:14px;opacity:.55;pointer-events:none;
-  }
-
-  .clear-btn{
-    position:absolute;right:8px;top:50%;transform:translateY(-50%);
-    width:28px;height:28px;border-radius:50%;
-    border:none;background:#F1E7DC;color:var(--muted);
-    font-size:16px;line-height:1;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-
-  .filter-row{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-    overflow-x:auto;
-    padding-bottom:2px;
-    scrollbar-width:none;
-    align-items:center;
-  }
-  .filter-row::-webkit-scrollbar{ display:none; }
-
-  .chip{
-    flex:0 0 auto;
-    border:1px solid var(--border);
-    background:#fff;
-    color:var(--muted);
-    border-radius:999px;
-    padding:7px 16px;
-    font-size:13px;
-    cursor:pointer;
-    font-family:inherit;
-    font-weight:600;
-    transition:background .18s,color .18s,border-color .18s;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .chip.active{
-    background:var(--primary);
-    border-color:var(--primary);
-    color:#fff;
-  }
-
-  .chip.all-toggle{
-    background:#F6EDE4;
-    border-color:#E8D9CA;
-    color:var(--primary-dark);
-    display:inline-flex;
-    align-items:center;
-    gap:4px;
-  }
-  .chip.all-toggle .arrow{ font-size:10px; opacity:.7; }
-
-  .chip.random{
-    background:#fff;
-    border-color:var(--accent);
-    color:var(--primary-dark);
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    font-weight:700;
-  }
-  .chip.random:active{ transform:scale(.96); }
-
-  .chip.expand-all{
-    background:#fff;
-    border-color:var(--border);
-    color:var(--primary-dark);
-  }
-
-  /* 分类面板 */
-  .cat-panel{
-    margin-top:10px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    padding:12px 10px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    animation:fadeIn .2s ease;
-  }
-  .cat-panel[hidden]{ display:none; }
-
-  @keyframes fadeIn{ from{ opacity:0; transform:translateY(-4px);} to{ opacity:1; transform:none; } }
-
-  .cat-panel .cat-pill{
-    border:1px solid var(--border);
-    background:#FBF6F0;
-    color:var(--primary-dark);
-    border-radius:999px;
-    padding:7px 14px;
-    font-size:12.5px;
-    font-weight:700;
-    cursor:pointer;
-    font-family:inherit;
-    transition:background .16s,border-color .16s,color .16s;
-  }
-  .cat-panel .cat-pill:active{ transform:scale(.96); }
-  .cat-panel .cat-pill.active{
-    background:var(--primary);
-    border-color:var(--primary);
-    color:#fff;
-  }
-
-  /* ---------- 主体 ---------- */
-  main{ padding-bottom:50px; }
-
-  .category{ margin-top:16px; scroll-margin-top:80px; }
-
-  .cat-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    padding:0 16px 8px;
-  }
-
-  .cat-head h2{
-    font-size:16px;
-    margin:0;
-    font-weight:800;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    color:var(--primary-dark);
-  }
-
-  .count{
-    font-size:11px;
-    font-weight:600;
-    color:var(--primary);
-    background:#F3E7DA;
-    border-radius:999px;
-    padding:2px 8px;
-  }
-
-  .toggle-btn{
-    border:none;
-    background:transparent;
-    color:var(--primary);
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    padding:5px 8px;
-    border-radius:9px;
-    font-family:inherit;
-    white-space:nowrap;
-    transition:background .18s;
-  }
-  .toggle-btn:active{ background:#F1E7DC; }
-
-  /* ---------- 卡片列表 ---------- */
-  .cards-row{
-    display:flex;
-    gap:12px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    padding:2px 16px 16px;
-    scroll-snap-type:x proximity;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:thin;
-    scrollbar-color:#E2D2C2 transparent;
-  }
-  .cards-row::-webkit-scrollbar{ height:6px; }
-  .cards-row::-webkit-scrollbar-thumb{ background:#E2D2C2; border-radius:3px; }
-  .cards-row::-webkit-scrollbar-track{ background:transparent; }
-
-  .cards-row.dragging{
-    cursor:grabbing;
-    scroll-snap-type:none;
-    user-select:none;
-    -webkit-user-select:none;
-  }
-
-  .cards-row.expanded{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(min(100%,232px),1fr));
-    overflow-x:visible;
-    scroll-snap-type:none;
-  }
-  .cards-row.expanded .card{ width:auto; }
-
-  /* ---------- 卡片 ---------- */
-  .card{
-    position:relative;
-    flex:0 0 auto;
-    width:min(78vw,286px);
-    background:var(--card);
-    border-radius:var(--radius);
-    border:1px solid var(--border);
-    box-shadow:var(--shadow);
-    padding:14px 14px 12px;
-    scroll-snap-align:start;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-height:196px;
-    transition:transform .18s ease, box-shadow .18s ease;
-    -webkit-tap-highlight-color:transparent;
-    outline:none;
-  }
-  .card:focus-visible{
-    box-shadow:0 0 0 3px rgba(217,168,124,.55);
-  }
-  @media (hover:hover){
-    .card:hover{
-      transform:translateY(-2px);
-      box-shadow:0 8px 22px rgba(139,94,60,.16);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="theme-color" content="#7b5e4c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FEONG咖啡馆">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>FEONG的咖啡馆收藏集</title>
+  <!-- 内联 manifest (data URI) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"FEONG的咖啡馆收藏集","short_name":"FEONG咖啡馆","start_url":".","display":"standalone","theme_color":"%237b5e4c","background_color":"%23fdf8f2","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2748%27 fill=%27%237b5e4c%27/%3E%3Ctext x=%2750%27 y=%2768%27 font-size=%2752%27 text-anchor=%27middle%27 fill=%27%23fdf8f2%27 font-family=%27Arial%27%3EF%3C/text%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml"}]}'>
+  <style>
+    :root {
+      --brown: #7b5e4c;
+      --brown-light: #a78b7a;
+      --brown-pale: #e8ddd4;
+      --cream: #fdf8f2;
+      --cream-dark: #f5ede4;
+      --white: #ffffff;
+      --text: #3d2e24;
+      --text-light: #7a6a5e;
+      --shadow: 0 4px 16px rgba(123, 94, 76, 0.10);
+      --shadow-hover: 0 8px 24px rgba(123, 94, 76, 0.16);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --red: #c0392b;
+      --red-soft: #e74c3c;
+      --gray-btn: #b0a59c;
+      --gray-btn-disabled: #d5cdc6;
+      --highlight: #f9e79f;
+      --highlight-border: #d4a017;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
     }
-  }
 
-  .card-title{
-    font-size:15px;
-    font-weight:800;
-    margin:0;
-    line-height:1.35;
-    color:var(--text);
-    word-break:break-word;
-    padding-right:58px;
-  }
-
-  .card-cat{
-    align-self:flex-start;
-    font-size:11px;
-    font-weight:600;
-    color:var(--primary);
-    background:#F6EDE4;
-    padding:3px 9px;
-    border-radius:999px;
-    max-width:100%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-
-  .card-addr{
-    margin:0;
-    font-size:12px;
-    color:var(--muted);
-    line-height:1.45;
-    word-break:break-word;
-  }
-
-  .card-desc{
-    margin:0;
-    font-size:12.5px;
-    color:#6E5D53;
-    line-height:1.5;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-    word-break:break-word;
-  }
-
-  /* 卡片底部按钮 */
-  .card-actions{
-    display:flex;
-    gap:6px;
-    margin-top:auto;
-    padding-top:10px;
-    align-items:center;
-    flex-wrap:nowrap;
-  }
-
-  .card-btn{
-    flex:1 1 0;
-    min-width:0;
-    height:32px;
-    padding:0 6px;
-    border-radius:9px;
-    border:1px solid var(--border);
-    background:#fff;
-    color:var(--primary-dark);
-    font-size:12px;
-    font-weight:700;
-    font-family:inherit;
-    text-decoration:none;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:3px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    transition:background .18s, border-color .18s, color .18s, transform .12s;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .card-btn.primary{
-    background:var(--primary);
-    border-color:var(--primary);
-    color:#fff;
-  }
-  @media (hover:hover){
-    .card-btn.primary:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
-    .card-btn:not(.primary):hover{ border-color:var(--accent); color:var(--primary); }
-  }
-  .card-btn:active{ transform:scale(.97); }
-  .card-btn[disabled], .card-btn.disabled{
-    opacity:.45;
-    cursor:not-allowed;
-    pointer-events:none;
-  }
-
-  /* 迷你已去过按钮 */
-  .card-btn.mini{
-    flex:0 0 auto;
-    width:34px;
-    height:32px;
-    padding:0;
-    font-size:14px;
-    border-radius:9px;
-    background:#FBF6F0;
-    border-color:var(--border);
-    color:var(--primary);
-  }
-  .card-btn.mini.checked{
-    background:#E6F4E8;
-    border-color:#BFE3C4;
-    color:#2E7D32;
-  }
-
-  .badge-visited{
-    position:absolute;
-    top:10px;
-    right:10px;
-    background:#E6F4E8;
-    color:#2E7D32;
-    font-size:11px;
-    font-weight:700;
-    padding:3px 9px;
-    border-radius:999px;
-    letter-spacing:.3px;
-  }
-
-  /* ---------- 状态块 ---------- */
-  .state-box{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:14px;
-    padding:72px 24px;
-    text-align:center;
-    color:var(--muted);
-    font-size:14px;
-  }
-  .state-box p{ margin:0; max-width:320px; }
-  .big-icon{ font-size:42px; line-height:1; }
-
-  .spinner{
-    width:26px;height:26px;
-    border:3px solid #EADFD4;
-    border-top-color:var(--primary);
-    border-radius:50%;
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-
-  /* ---------- 按钮 ---------- */
-  .btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    height:44px;
-    padding:0 18px;
-    border-radius:13px;
-    font-size:14px;
-    font-weight:700;
-    border:1px solid transparent;
-    cursor:pointer;
-    text-decoration:none;
-    font-family:inherit;
-    transition:background .18s, color .18s, border-color .18s, transform .12s;
-    -webkit-tap-highlight-color:transparent;
-    white-space:nowrap;
-  }
-  .btn:active{ transform:scale(.97); }
-  .btn.primary{ background:var(--primary); color:#fff; }
-  @media (hover:hover){ .btn.primary:hover{ background:var(--primary-dark); } }
-  .btn.outline{ background:#fff; border-color:var(--border); color:var(--text); }
-  @media (hover:hover){ .btn.outline:hover{ border-color:var(--accent); color:var(--primary); } }
-  .btn.ghost{ background:#F3E7DA; color:var(--primary-dark); }
-  .btn[disabled],.btn.disabled{
-    opacity:.5;
-    cursor:not-allowed;
-    pointer-events:none;
-  }
-
-  /* ---------- 一键到顶部 ---------- */
-  .back-to-top{
-    position:fixed;
-    right:16px;
-    bottom:calc(22px + env(safe-area-inset-bottom));
-    width:46px;
-    height:46px;
-    border-radius:50%;
-    border:1px solid var(--border);
-    background:#fff;
-    color:var(--primary);
-    font-size:19px;
-    line-height:1;
-    cursor:pointer;
-    box-shadow:var(--shadow-lg);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:90;
-    opacity:0;
-    visibility:hidden;
-    transform:translateY(14px) scale(.9);
-    transition:opacity .24s ease, transform .24s ease, visibility .24s ease, background .18s;
-    -webkit-tap-highlight-color:transparent;
-    padding:0;
-  }
-  .back-to-top.visible{
-    opacity:1;
-    visibility:visible;
-    transform:translateY(0) scale(1);
-  }
-  @media (hover:hover){
-    .back-to-top:hover{
-      background:var(--primary);
-      color:#fff;
-      border-color:var(--primary);
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
-  }
-  .back-to-top:active{ transform:scale(.92); }
 
-  /* ---------- 弹窗（仅用于随机卡片展示，无二级菜单） ---------- */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(59,47,42,.45);
-    -webkit-backdrop-filter:blur(2px);
-    backdrop-filter:blur(2px);
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    opacity:0;
-    visibility:hidden;
-    transition:opacity .22s ease, visibility .22s ease;
-    z-index:100;
-  }
-  .modal-overlay.open{ opacity:1; visibility:visible; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overscroll-behavior-y: contain;
+    }
 
-  .modal{
-    position:relative;
-    width:100%;
-    max-width:560px;
-    background:var(--card);
-    border-radius:22px 22px 0 0;
-    max-height:88vh;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:24px 20px calc(22px + env(safe-area-inset-bottom));
-    transform:translateY(26px);
-    transition:transform .28s cubic-bezier(.22,1,.36,1);
-    box-shadow:var(--shadow-lg);
-  }
-  .modal-overlay.open .modal{ transform:translateY(0); }
+    body {
+      font-family: var(--font);
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
 
-  @media (min-width:640px){
-    .modal-overlay{ align-items:center; padding:24px; }
-    .modal{ border-radius:22px; transform:translateY(14px) scale(.97); }
-    .modal-overlay.open .modal{ transform:none; }
-  }
+    /* 下拉刷新指示器 */
+    .pull-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      z-index: 999;
+      overflow: hidden;
+      transition: height 0.2s ease;
+      pointer-events: none;
+    }
 
-  .modal-close{
-    position:absolute;
-    top:12px; right:12px;
-    width:34px;height:34px;
-    border-radius:50%;
-    border:none;
-    background:#F4EBE2;
-    color:var(--muted);
-    font-size:20px;
-    line-height:1;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
+    .pull-indicator.visible {
+      height: 60px;
+    }
 
-  .modal-cat{
-    display:inline-block;
-    font-size:11.5px;
-    font-weight:700;
-    color:var(--primary);
-    background:#F6EDE4;
-    padding:3px 10px;
-    border-radius:999px;
-    margin-bottom:10px;
-  }
+    .pull-indicator .spinner {
+      width: 26px;
+      height: 26px;
+      border: 3px solid var(--brown-pale);
+      border-top-color: var(--brown);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
 
-  .modal h2{
-    margin:0 0 6px;
-    font-size:21px;
-    line-height:1.35;
-    color:var(--primary-dark);
-    padding-right:36px;
-    word-break:break-word;
-  }
+    .pull-indicator.visible .spinner {
+      opacity: 1;
+    }
 
-  .modal-section{
-    margin-top:18px;
-    padding-top:16px;
-    border-top:1px dashed var(--border);
-  }
-  .modal-section h3{
-    margin:0 0 6px;
-    font-size:12.5px;
-    font-weight:800;
-    color:var(--muted);
-    letter-spacing:.6px;
-  }
-  .modal-section p{
-    margin:0;
-    font-size:14px;
-    line-height:1.65;
-    color:var(--text);
-    white-space:pre-wrap;
-    word-break:break-word;
-  }
-  .modal-section a{
-    color:var(--primary);
-    word-break:break-all;
-  }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-  .modal-actions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:22px;
-  }
-  .modal-actions .btn{ flex:1 1 140px; }
+    /* 顶部标题 */
+    .app-header {
+      padding: 20px 16px 8px;
+      text-align: center;
+      background: var(--cream);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-  /* ---------- 下拉刷新 ---------- */
-  .pull-indicator{
-    position:fixed;
-    top:8px;
-    left:50%;
-    transform:translate(-50%,-60px);
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 16px;
-    background:#fff;
-    border-radius:999px;
-    box-shadow:var(--shadow-lg);
-    font-size:13px;
-    font-weight:600;
-    color:var(--primary);
-    z-index:200;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .16s ease;
-    white-space:nowrap;
-  }
-  .pull-indicator .spinner{
-    width:15px;height:15px;
-    border-width:2px;
-    display:none;
-  }
-  .pull-indicator.spinning .spinner{ display:block; }
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--brown);
+      letter-spacing: 0.02em;
+    }
 
-  /* ---------- Toast ---------- */
-  .toast{
-    position:fixed;
-    left:50%;
-    bottom:calc(28px + env(safe-area-inset-bottom));
-    transform:translate(-50%,20px);
-    background:rgba(59,47,42,.92);
-    color:#fff;
-    font-size:13px;
-    padding:10px 18px;
-    border-radius:999px;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .22s ease, transform .22s ease;
-    z-index:300;
-    max-width:86vw;
-    text-align:center;
-  }
-  .toast.show{ opacity:1; transform:translate(-50%,0); }
-</style>
+    .app-header .sub {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    /* 顶部菜单栏 */
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--cream);
+      padding: 8px 12px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--brown-pale);
+      box-shadow: 0 2px 8px rgba(123,94,76,0.05);
+    }
+
+    .toolbar .search-wrap {
+      flex: 1 1 140px;
+      min-width: 120px;
+      position: relative;
+    }
+
+    .toolbar input[type="search"] {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      border: 1.5px solid var(--brown-pale);
+      border-radius: 24px;
+      font-size: 0.9rem;
+      background: var(--white);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: var(--font);
+    }
+
+    .toolbar input[type="search"]:focus {
+      border-color: var(--brown);
+    }
+
+    .toolbar .search-wrap::before {
+      content: "🔍";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .toolbar button {
+      padding: 8px 14px;
+      border: 1.5px solid var(--brown-pale);
+      border-radius: 24px;
+      background: var(--white);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .toolbar button:hover,
+    .toolbar button:active {
+      background: var(--brown-pale);
+      border-color: var(--brown-light);
+    }
+
+    .toolbar button.primary {
+      background: var(--brown);
+      color: #fff;
+      border-color: var(--brown);
+    }
+
+    .toolbar button.primary:hover {
+      background: #6a4f3f;
+    }
+
+    /* 分类面板 */
+    .cat-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61,46,36,0.35);
+      z-index: 200;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 90px;
+    }
+
+    .cat-panel-overlay.open {
+      display: flex;
+    }
+
+    .cat-panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-hover);
+      padding: 16px 14px;
+      width: min(92vw, 380px);
+      max-height: 65vh;
+      overflow-y: auto;
+      animation: fadeSlide 0.2s ease;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cat-panel h3 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      color: var(--brown);
+      font-weight: 600;
+    }
+
+    .cat-panel .cat-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cat-panel .cat-options button {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--brown-pale);
+      background: var(--cream);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cat-panel .cat-options button.active {
+      background: var(--brown);
+      color: #fff;
+      border-color: var(--brown);
+    }
+
+    .cat-panel .cat-options button:hover {
+      border-color: var(--brown);
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      padding: 12px 12px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* 状态提示 */
+    .state-box {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+
+    .state-box .emoji {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .state-box button {
+      margin-top: 16px;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 24px;
+      background: var(--brown);
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    .state-box button:hover {
+      background: #6a4f3f;
+    }
+
+    /* 分类区块 */
+    .category-section {
+      margin-bottom: 24px;
+      background: transparent;
+      border-radius: var(--radius);
+      scroll-margin-top: 120px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 8px;
+    }
+
+    .category-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--brown);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .category-header h2 .count {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-light);
+      background: var(--brown-pale);
+      padding: 1px 8px;
+      border-radius: 12px;
+    }
+
+    .category-header .toggle-all-btn {
+      padding: 5px 14px;
+      border: 1.5px solid var(--brown-pale);
+      border-radius: 20px;
+      background: var(--white);
+      color: var(--brown);
+      font-size: 0.78rem;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .category-header .toggle-all-btn:hover {
+      background: var(--brown-pale);
+    }
+
+    /* 横向滚动卡片列表 */
+    .cards-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding: 4px 2px 12px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--brown-pale) transparent;
+    }
+
+    .cards-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .cards-scroll::-webkit-scrollbar-thumb {
+      background: var(--brown-pale);
+      border-radius: 4px;
+    }
+
+    .cards-scroll .card {
+      flex: 0 0 220px;
+      scroll-snap-align: start;
+      max-width: 220px;
+    }
+
+    /* 展开后的网格 */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+      padding: 4px 2px 12px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 10px;
+      transition: box-shadow 0.2s, transform 0.15s, border 0.2s;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card.highlighted {
+      border-color: var(--highlight-border);
+      background: #fffdf0;
+      box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.25), var(--shadow-hover);
+      animation: pulse 1.2s ease;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.015); }
+      100% { transform: scale(1); }
+    }
+
+    .card .card-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 2px;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .card .card-cat {
+      font-size: 0.7rem;
+      color: var(--brown);
+      background: var(--brown-pale);
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-weight: 500;
+      align-self: flex-start;
+    }
+
+    .card .card-address {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card .card-desc {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .card .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--cream-dark);
+      margin-top: auto;
+    }
+
+    .card .card-actions .btn-xhs {
+      flex: 0 0 auto;
+      padding: 5px 10px;
+      border-radius: 16px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      font-size: 0.7rem;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 500;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .card .card-actions .btn-xhs:hover {
+      background: #a93226;
+    }
+
+    .card .card-actions .btn-xhs.disabled {
+      background: var(--gray-btn-disabled);
+      cursor: not-allowed;
+      pointer-events: none;
+      color: #999;
+    }
+
+    .card .card-actions .btn-nav {
+      flex: 1 1 auto;
+      padding: 5px 10px;
+      border-radius: 16px;
+      background: var(--brown);
+      color: #fff;
+      border: none;
+      font-size: 0.7rem;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-weight: 500;
+      transition: background 0.15s;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .card .card-actions .btn-nav:hover {
+      background: #6a4f3f;
+    }
+
+    .card .card-actions .btn-nav.disabled {
+      background: var(--gray-btn-disabled);
+      cursor: not-allowed;
+      pointer-events: none;
+      color: #999;
+    }
+
+    .card .card-actions .btn-visited {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--brown-pale);
+      background: var(--cream);
+      color: var(--gray-btn);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .card .card-actions .btn-visited.active {
+      background: var(--brown);
+      color: #fff;
+      border-color: var(--brown);
+    }
+
+    .card .card-actions .btn-visited:hover {
+      border-color: var(--brown);
+    }
+
+    /* 分类展开/收起动画 */
+    .cards-container {
+      transition: opacity 0.2s;
+    }
+
+    /* 滚动到卡片时增加边距 */
+    .card {
+      scroll-margin-top: 130px;
+    }
+
+    /* 响应式：手机端卡片宽度稍小 */
+    @media (max-width: 480px) {
+      .cards-scroll .card {
+        flex: 0 0 190px;
+        max-width: 190px;
+      }
+      .cards-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .card {
+        padding: 12px 10px 8px;
+      }
+      .card .card-name {
+        font-size: 0.92rem;
+      }
+      .toolbar {
+        padding: 6px 8px 8px;
+        gap: 6px;
+      }
+      .toolbar button {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+      }
+      .app-header h1 {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 底部留白 */
+    .footer-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-light);
+      padding: 16px 0 8px;
+      opacity: 0.7;
+    }
+
+    /* 鼠标拖拽横向滚动时的样式 */
+    .cards-scroll.dragging {
+      cursor: grabbing;
+      user-select: none;
+      scroll-snap-type: none;
+    }
+
+    .cards-scroll {
+      cursor: grab;
+    }
+
+    /* 加载更多动画 */
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.4s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="pull-indicator" id="pullIndicator">
-  <div class="spinner"></div>
-  <span id="pullText">下拉刷新</span>
-</div>
-
-<header class="app-header">
-  <div class="wrap">
-    <div class="header-top">
-      <h1>☕ FEONG的咖啡馆收藏集</h1>
-      <div class="header-actions">
-        <button class="icon-btn" id="randomBtn" aria-label="随机咖啡馆" title="随机挑选">🎲</button>
-        <button class="icon-btn" id="refreshBtn" aria-label="刷新数据" title="刷新数据">↻</button>
-      </div>
-    </div>
-    <p class="subtitle" id="subtitle">正在加载咖啡馆资料…</p>
-
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input id="searchInput" type="search" placeholder="搜索名字、地区、描述、分类…" autocomplete="off" enterkeyhint="search">
-      <button class="clear-btn" id="clearSearch" hidden aria-label="清除搜索">×</button>
-    </div>
-
-    <div class="filter-row" id="filterRow">
-      <button class="chip all-toggle" id="allToggle" data-filter="all">全部 <span class="arrow">▼</span></button>
-      <button class="chip" data-filter="todo">未去过</button>
-      <button class="chip" data-filter="visited">已去过</button>
-      <button class="chip expand-all" id="expandAllBtn">展开全部</button>
-      <button class="chip random" id="randomChip">🎲 随机</button>
-    </div>
-
-    <div class="cat-panel" id="catPanel" hidden></div>
+  <!-- 下拉刷新指示器 -->
+  <div class="pull-indicator" id="pullIndicator">
+    <div class="spinner"></div>
   </div>
-</header>
 
-<main id="content" class="wrap"></main>
+  <!-- 顶部标题 -->
+  <header class="app-header">
+    <h1>☕ FEONG的咖啡馆收藏集</h1>
+    <div class="sub">收藏每一杯好咖啡</div>
+  </header>
 
-<button class="back-to-top" id="backToTop" aria-label="回到顶部" title="回到顶部">↑</button>
-
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
-    <div id="modalBody"></div>
+  <!-- 工具栏 -->
+  <div class="toolbar" id="toolbar">
+    <div class="search-wrap">
+      <input type="search" id="searchInput" placeholder="搜索名字、地址、描述…" autocomplete="off">
+    </div>
+    <button id="categoryBtn" title="筛选分类">📂 全部</button>
+    <button id="randomBtn" title="随机挑选">🎲 随机</button>
+    <button id="toggleAllBtn" title="全部展开/收起">📋 全部展开</button>
+    <button id="refreshBtn" class="primary" title="重新加载数据">🔄 刷新</button>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <!-- 分类选择面板 -->
+  <div class="cat-panel-overlay" id="catPanelOverlay">
+    <div class="cat-panel" id="catPanel">
+      <h3>选择分类</h3>
+      <div class="cat-options" id="catOptions"></div>
+    </div>
+  </div>
 
-<script>
-(function () {
-  'use strict';
+  <!-- 主内容 -->
+  <main class="main-content" id="mainContent">
+    <div class="state-box" id="stateBox">
+      <span class="emoji">☕</span>
+      <div>正在加载咖啡馆资料…</div>
+    </div>
+  </main>
 
-  /* =========================================================
-     常量与状态
-     ========================================================= */
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv';
-  var LS_KEY = 'feong_cafe_visited_v1';
-  var DEFAULT_VISIBLE = 6;
-  var PULL_THRESHOLD = 70;
-  var BACK_TO_TOP_SCROLL = 320;
+  <div class="footer-note">FEONG · 咖啡馆收藏集</div>
 
-  var state = {
-    cafes: [],
-    visited: new Set(),
-    query: '',
-    filter: 'all',
-    categoryFilter: '',
-    expanded: new Set(),
-    allExpanded: false,
-    loading: false,
-    refreshing: false,
-    loaded: false,
-    error: null
-  };
+  <script>
+    (function() {
+      'use strict';
 
-  var renderedList = [];
-  var currentCafe = null;
-  var suppressClick = false;
+      // ---------- 配置 ----------
+      const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv';
+      const LS_VISITED_KEY = 'feong_cafe_visited';
 
-  /* =========================================================
-     工具函数
-     ========================================================= */
-  function escapeHtml(str) {
-    return String(str == null ? '' : str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
+      // ---------- 状态 ----------
+      let allCafes = [];              // 所有咖啡馆数据
+      let filteredCafes = [];         // 当前筛选后的数据
+      let categories = [];            // 排序后的分类列表
+      let activeCategory = '全部';    // 当前选中的分类
+      let searchQuery = '';           // 搜索关键词
+      let expandedCategories = {};    // 每个分类是否展开全部（true/false）
+      let globalExpandState = false;  // 全部展开/收起的状态
+      let visitedMap = {};            // 已去过标记 { id: true }
+      let isLoading = false;
+      let loadError = null;
+      let lastHighlightedCardId = null;
 
-  function truncate(str, n) {
-    var s = String(str == null ? '' : str).replace(/\s+/g, ' ').trim();
-    return s.length > n ? s.slice(0, n) + '…' : s;
-  }
+      // ---------- DOM 引用 ----------
+      const mainContent = document.getElementById('mainContent');
+      const stateBox = document.getElementById('stateBox');
+      const searchInput = document.getElementById('searchInput');
+      const categoryBtn = document.getElementById('categoryBtn');
+      const randomBtn = document.getElementById('randomBtn');
+      const toggleAllBtn = document.getElementById('toggleAllBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const catPanelOverlay = document.getElementById('catPanelOverlay');
+      const catOptions = document.getElementById('catOptions');
+      const pullIndicator = document.getElementById('pullIndicator');
 
-  function $(id) { return document.getElementById(id); }
-
-  var toastTimer = null;
-  function toast(msg) {
-    var t = $('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
-  }
-
-  /* =========================================================
-     CSV 解析
-     ========================================================= */
-  function parseCSV(text) {
-    if (typeof text !== 'string') return [];
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-
-    var rows = [];
-    var row = [];
-    var field = '';
-    var inQuotes = false;
-    var i = 0;
-    var len = text.length;
-
-    while (i < len) {
-      var ch = text.charAt(i);
-
-      if (inQuotes) {
-        if (ch === '"') {
-          if (text.charAt(i + 1) === '"') { field += '"'; i += 2; continue; }
-          inQuotes = false; i++; continue;
-        }
-        field += ch; i++; continue;
+      // ---------- 工具函数 ----------
+      function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
-      if (ch === '"') { inQuotes = true; i++; continue; }
-      if (ch === ',') { row.push(field); field = ''; i++; continue; }
+      // 简单的 CSV 解析器，支持引号、逗号、换行
+      function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let field = '';
+        let inQuotes = false;
+        let i = 0;
 
-      if (ch === '\r') {
-        if (text.charAt(i + 1) === '\n') i++;
-        row.push(field); field = '';
-        rows.push(row); row = [];
-        i++; continue;
-      }
-
-      if (ch === '\n') {
-        row.push(field); field = '';
-        rows.push(row); row = [];
-        i++; continue;
-      }
-
-      field += ch;
-      i++;
-    }
-
-    if (field.length > 0 || row.length > 0) {
-      row.push(field);
-      rows.push(row);
-    }
-    return rows;
-  }
-
-  /* =========================================================
-     表头自动映射
-     ========================================================= */
-  var ALIASES = {
-    id:          ['id', '编号', '序号', '标识'],
-    name:        ['name', '名称', '店名', '名字', '店铺名称', '咖啡馆名称', '咖啡馆', '标题'],
-    region:      ['region', '地区', '区域', '城市', '所在地区', '地域', '行政区'],
-    address:     ['address', '地址', '位置', '地点', '详细地址'],
-    category:    ['category', '分类', '类别', '类型', '标签'],
-    xiaohongshu: ['xiaohongshu', '小红书', '小红书链接', '链接', 'url', 'link', '笔记'],
-    description: ['description', '描述', '简介', '介绍', '备注', '说明']
-  };
-
-  var FIELD_ORDER = ['id', 'name', 'region', 'address', 'category', 'xiaohongshu', 'description'];
-
-  function normKey(s) {
-    return String(s == null ? '' : s).toLowerCase().replace(/[\s_\-\.]/g, '').trim();
-  }
-
-  function buildFieldMap(header) {
-    var norm = header.map(normKey);
-    var map = {};
-    var used = {};
-    var k, i, aliases;
-
-    for (var a = 0; a < FIELD_ORDER.length; a++) {
-      k = FIELD_ORDER[a];
-      aliases = ALIASES[k].map(normKey);
-      for (i = 0; i < norm.length; i++) {
-        if (used[i]) continue;
-        if (aliases.indexOf(norm[i]) !== -1) {
-          map[k] = i;
-          used[i] = true;
-          break;
-        }
-      }
-    }
-
-    for (var b = 0; b < FIELD_ORDER.length; b++) {
-      k = FIELD_ORDER[b];
-      if (map[k] !== undefined) continue;
-      aliases = ALIASES[k].map(normKey);
-      for (i = 0; i < norm.length; i++) {
-        if (used[i] || !norm[i]) continue;
-        var hit = false;
-        for (var c = 0; c < aliases.length; c++) {
-          if (aliases[c] && norm[i].indexOf(aliases[c]) !== -1) { hit = true; break; }
-        }
-        if (hit) { map[k] = i; used[i] = true; break; }
-      }
-    }
-
-    return map;
-  }
-
-  function rowsToObjects(rows) {
-    if (!rows || rows.length === 0) return [];
-    var header = (rows[0] || []).map(function (h) { return String(h == null ? '' : h).trim(); });
-    var map = buildFieldMap(header);
-    var out = [];
-
-    for (var r = 1; r < rows.length; r++) {
-      var cells = rows[r];
-      if (!cells) continue;
-
-      var empty = true;
-      for (var e = 0; e < cells.length; e++) {
-        if (cells[e] && String(cells[e]).trim()) { empty = false; break; }
-      }
-      if (empty) continue;
-
-      var obj = {};
-      for (var f = 0; f < FIELD_ORDER.length; f++) {
-        var key = FIELD_ORDER[f];
-        var idx = map[key];
-        if (idx !== undefined && idx >= 0 && idx < cells.length) {
-          obj[key] = String(cells[idx] == null ? '' : cells[idx]).trim();
-        } else {
-          obj[key] = '';
-        }
-      }
-      out.push(obj);
-    }
-    return out;
-  }
-
-  function buildCafes(objs) {
-    var list = [];
-    for (var i = 0; i < objs.length; i++) {
-      var o = objs[i];
-      var name = o.name || '';
-      var address = o.address || '';
-      var region = o.region || '';
-      if (!name && !address && !region) continue;
-
-      var id = o.id || (name + '||' + address || region);
-      list.push({
-        id: id,
-        name: name,
-        region: region,
-        address: address,
-        category: o.category || '其它',
-        description: o.description || '',
-        xiaohongshu: o.xiaohongshu || ''
-      });
-    }
-    return list;
-  }
-
-  /* =========================================================
-     分类排序
-     ========================================================= */
-  var LAST_CATEGORIES = ['其它', '其他', '未分类', '其他分类'];
-
-  function isLastCategory(name) {
-    return LAST_CATEGORIES.indexOf(String(name).trim()) !== -1;
-  }
-
-  function compareCategory(a, b) {
-    var aLast = isLastCategory(a);
-    var bLast = isLastCategory(b);
-    if (aLast && !bLast) return 1;
-    if (bLast && !aLast) return -1;
-    try {
-      return String(a).localeCompare(String(b), 'zh-Hans-CN', { numeric: true, sensitivity: 'base' });
-    } catch (e) {
-      return String(a) < String(b) ? -1 : (String(a) > String(b) ? 1 : 0);
-    }
-  }
-
-  /* =========================================================
-     已去过（localStorage）
-     ========================================================= */
-  function loadVisited() {
-    try {
-      var raw = localStorage.getItem(LS_KEY);
-      if (!raw) return new Set();
-      var arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return new Set();
-      return new Set(arr.map(String));
-    } catch (e) {
-      return new Set();
-    }
-  }
-
-  function saveVisited() {
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(Array.from(state.visited)));
-    } catch (e) {
-      /* 忽略存储失败 */
-    }
-  }
-
-  /* =========================================================
-     链接处理
-     ========================================================= */
-  function normalizeXhsUrl(raw) {
-    var xhs = String(raw == null ? '' : raw).trim();
-    if (!xhs) return '';
-    if (/^https?:\/\//i.test(xhs)) return xhs;
-    if (/^(www\.|xhslink\.|xiaohongshu\.|xhs\.)/i.test(xhs)) return 'https://' + xhs;
-    return '';
-  }
-
-  function navUrlOf(cafe) {
-    var dest = (cafe.name || '').trim() || (cafe.address || '').trim() || (cafe.region || '').trim();
-    if (!dest) return '';
-    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest);
-  }
-
-  /* =========================================================
-     过滤
-     ========================================================= */
-  function matches(cafe) {
-    var q = state.query.trim().toLowerCase();
-    if (q) {
-      var hay = (cafe.name + ' ' + cafe.region + ' ' + cafe.address + ' ' +
-                 cafe.description + ' ' + cafe.category).toLowerCase();
-      if (hay.indexOf(q) === -1) return false;
-    }
-    var visited = state.visited.has(cafe.id);
-    if (state.filter === 'visited' && !visited) return false;
-    if (state.filter === 'todo' && visited) return false;
-    if (state.categoryFilter && (cafe.category || '其它') !== state.categoryFilter) return false;
-    return true;
-  }
-
-  /* =========================================================
-     获取所有分类
-     ========================================================= */
-  function getAllCategories() {
-    var set = {};
-    for (var i = 0; i < state.cafes.length; i++) {
-      var cat = state.cafes[i].category || '其它';
-      set[cat] = true;
-    }
-    var arr = Object.keys(set);
-    arr.sort(compareCategory);
-    return arr;
-  }
-
-  /* =========================================================
-     渲染
-     ========================================================= */
-  function updateSubtitle() {
-    var sub = $('subtitle');
-    if (state.loading && state.cafes.length === 0) {
-      sub.textContent = '正在加载咖啡馆资料…';
-      return;
-    }
-    if (state.error && state.cafes.length === 0) {
-      sub.textContent = '加载失败，请重试';
-      return;
-    }
-    var total = state.cafes.length;
-    var visitedCount = 0;
-    for (var i = 0; i < state.cafes.length; i++) {
-      if (state.visited.has(state.cafes[i].id)) visitedCount++;
-    }
-    sub.textContent = '共 ' + total + ' 家咖啡馆 · 已去过 ' + visitedCount + ' 家';
-  }
-
-  /* 卡片HTML：底部直接放 导航 / 小红书 / 迷你已去过 */
-  function cardHTML(cafe, idx) {
-    var visited = state.visited.has(cafe.id);
-    var name = cafe.name || '未命名咖啡馆';
-
-    var regionText = (cafe.region || cafe.address || '').trim();
-    var regionShow = regionText ? truncate(regionText, 30) : '暂无地区';
-
-    var desc = cafe.description ? truncate(cafe.description, 64) : '暂无描述';
-
-    var navUrl = navUrlOf(cafe);
-    var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
-
-    var navBtn = navUrl
-      ? '<a class="card-btn primary" data-action="nav" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>'
-      : '<button class="card-btn primary" type="button" disabled>🧭 导航</button>';
-
-    var xhsBtn = xhsUrl
-      ? '<a class="card-btn" data-action="xhs" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕 小红书</a>'
-      : '<button class="card-btn" type="button" disabled>📕 小红书</button>';
-
-    var visitedBtn = '<button class="card-btn mini' + (visited ? ' checked' : '') + '" data-action="toggle-visited" data-id="' + escapeHtml(cafe.id) + '" type="button" title="标记已去过">' + (visited ? '✓' : '☐') + '</button>';
-
-    var actions =
-      '<div class="card-actions">' +
-        navBtn +
-        xhsBtn +
-        visitedBtn +
-      '</div>';
-
-    return '<article class="card' + (visited ? ' visited' : '') + '" data-idx="' + idx + '" tabindex="0" aria-label="' + escapeHtml(name) + '">' +
-      (visited ? '<span class="badge-visited">已去过</span>' : '') +
-      '<h3 class="card-title">' + escapeHtml(name) + '</h3>' +
-      '<span class="card-cat">' + escapeHtml(cafe.category || '其它') + '</span>' +
-      '<p class="card-addr">📍 ' + escapeHtml(regionShow) + '</p>' +
-      '<p class="card-desc">' + escapeHtml(desc) + '</p>' +
-      actions +
-      '</article>';
-  }
-
-  function render() {
-    var content = $('content');
-
-    if (state.cafes.length === 0) {
-      if (state.loading) {
-        content.innerHTML = '<div class="state-box"><div class="spinner"></div><p>正在加载咖啡馆资料…</p></div>';
-      } else if (state.error) {
-        content.innerHTML =
-          '<div class="state-box">' +
-            '<div class="big-icon">😕</div>' +
-            '<p>加载失败：' + escapeHtml(state.error) + '</p>' +
-            '<button class="btn primary" id="retryBtn">重试</button>' +
-          '</div>';
-        var retry = $('retryBtn');
-        if (retry) retry.addEventListener('click', function () { fetchData(true); });
-      } else {
-        content.innerHTML =
-          '<div class="state-box">' +
-            '<div class="big-icon">☕</div>' +
-            '<p>暂时还没有咖啡馆资料，稍后再来看看吧。</p>' +
-          '</div>';
-      }
-      updateSubtitle();
-      return;
-    }
-
-    var list = [];
-    for (var i = 0; i < state.cafes.length; i++) {
-      if (matches(state.cafes[i])) list.push(state.cafes[i]);
-    }
-    renderedList = list;
-
-    if (list.length === 0) {
-      var hasFilter = state.query.trim() !== '' || state.filter !== 'all' || state.categoryFilter;
-      content.innerHTML =
-        '<div class="state-box">' +
-          '<div class="big-icon">🔍</div>' +
-          '<p>' + (hasFilter ? '没有找到符合条件的咖啡馆。' : '暂时还没有咖啡馆资料。') + '</p>' +
-          (hasFilter ? '<button class="btn outline" id="resetBtn">清除筛选</button>' : '') +
-        '</div>';
-      var rb = $('resetBtn');
-      if (rb) {
-        rb.addEventListener('click', function () {
-          state.query = '';
-          state.filter = 'all';
-          state.categoryFilter = '';
-          $('searchInput').value = '';
-          $('clearSearch').hidden = true;
-          var chips = document.querySelectorAll('#filterRow .chip');
-          for (var k = 0; k < chips.length; k++) {
-            chips[k].classList.toggle('active', chips[k].getAttribute('data-filter') === 'all');
+        while (i < text.length) {
+          const ch = text[i];
+          if (inQuotes) {
+            if (ch === '"') {
+              if (i + 1 < text.length && text[i + 1] === '"') {
+                field += '"';
+                i += 2;
+              } else {
+                inQuotes = false;
+                i++;
+              }
+            } else {
+              field += ch;
+              i++;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+              i++;
+            } else if (ch === ',') {
+              row.push(field);
+              field = '';
+              i++;
+            } else if (ch === '\n' || ch === '\r') {
+              if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') {
+                i++;
+              }
+              row.push(field);
+              field = '';
+              if (row.length > 1 || row[0] !== '') {
+                rows.push(row);
+              }
+              row = [];
+              i++;
+            } else {
+              field += ch;
+              i++;
+            }
           }
-          $('allToggle').classList.add('active');
-          renderCatPanel();
-          render();
+        }
+        // 最后一个字段
+        if (field !== '' || row.length > 0) {
+          row.push(field);
+          if (row.length > 1 || row[0] !== '') {
+            rows.push(row);
+          }
+        }
+        return rows;
+      }
+
+      // 将 CSV 行数组转为对象，自动映射列名
+      function mapCSVToObjects(rows) {
+        if (!rows || rows.length < 2) return [];
+        const header = rows[0].map(h => h.trim().toLowerCase());
+        // 找到各字段的索引
+        const idxName = header.indexOf('name');
+        const idxAddress = header.indexOf('address');
+        const idxXhs = header.indexOf('xiaohongshu');
+        const idxCategory = header.indexOf('category');
+        const idxDesc = header.indexOf('description');
+        const idxId = header.indexOf('id');
+
+        const result = [];
+        for (let r = 1; r < rows.length; r++) {
+          const row = rows[r];
+          if (!row || row.length === 0) continue;
+          // 跳过全空行
+          if (row.every(cell => cell.trim() === '')) continue;
+
+          const obj = {
+            id: idxId >= 0 ? (row[idxId] || '').trim() : '',
+            name: idxName >= 0 ? (row[idxName] || '').trim() : '',
+            address: idxAddress >= 0 ? (row[idxAddress] || '').trim() : '',
+            xiaohongshu: idxXhs >= 0 ? (row[idxXhs] || '').trim() : '',
+            category: idxCategory >= 0 ? (row[idxCategory] || '').trim() : '',
+            description: idxDesc >= 0 ? (row[idxDesc] || '').trim() : ''
+          };
+
+          // 如果 name 和 address 都为空，跳过
+          if (!obj.name && !obj.address) continue;
+
+          // 生成唯一标识
+          if (!obj.id) {
+            obj.id = (obj.name + '||' + obj.address).toLowerCase();
+          }
+
+          // 分类默认“其它”
+          if (!obj.category) obj.category = '其它';
+
+          result.push(obj);
+        }
+        return result;
+      }
+
+      // 分类排序：字母 A-Z，中文“其它”最后
+      function sortCategories(cats) {
+        const other = '其它';
+        const rest = cats.filter(c => c !== other);
+        rest.sort((a, b) => a.localeCompare(b, 'zh-Hans-CN', { sensitivity: 'base' }));
+        return rest.concat(cats.includes(other) ? [other] : []);
+      }
+
+      // 从数据中提取分类
+      function extractCategories(data) {
+        const set = new Set();
+        data.forEach(c => set.add(c.category || '其它'));
+        return sortCategories(Array.from(set));
+      }
+
+      // 读取 localStorage 中的已去过标记
+      function loadVisited() {
+        try {
+          const raw = localStorage.getItem(LS_VISITED_KEY);
+          visitedMap = raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          visitedMap = {};
+        }
+      }
+
+      function saveVisited() {
+        try {
+          localStorage.setItem(LS_VISITED_KEY, JSON.stringify(visitedMap));
+        } catch (e) { /* ignore */ }
+      }
+
+      // ---------- 数据加载 ----------
+      async function fetchData() {
+        if (isLoading) return;
+        isLoading = true;
+        loadError = null;
+        renderState();
+
+        try {
+          const ts = Date.now();
+          const url = CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + '_ts=' + ts;
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + resp.statusText);
+          const text = await resp.text();
+          if (!text || text.trim() === '') throw new Error('CSV 内容为空');
+
+          const rows = parseCSV(text);
+          const data = mapCSVToObjects(rows);
+
+          if (data.length === 0) throw new Error('没有解析到咖啡馆数据');
+
+          allCafes = data;
+          categories = extractCategories(allCafes);
+
+          // 初始化展开状态
+          expandedCategories = {};
+          categories.forEach(c => { expandedCategories[c] = false; });
+
+          // 应用筛选
+          applyFilters();
+          loadError = null;
+        } catch (err) {
+          console.error('加载失败:', err);
+          loadError = err.message || '未知错误';
+          allCafes = [];
+          filteredCafes = [];
+          categories = [];
+        } finally {
+          isLoading = false;
+          renderState();
+          renderCategoriesPanel();
+        }
+      }
+
+      // ---------- 筛选逻辑 ----------
+      function applyFilters() {
+        const q = searchQuery.trim().toLowerCase();
+        const cat = activeCategory;
+
+        filteredCafes = allCafes.filter(cafe => {
+          // 分类筛选
+          if (cat !== '全部' && cafe.category !== cat) return false;
+          // 搜索
+          if (q) {
+            const haystack = [
+              cafe.name,
+              cafe.address,
+              cafe.description,
+              cafe.category
+            ].join(' ').toLowerCase();
+            if (!haystack.includes(q)) return false;
+          }
+          return true;
+        });
+
+        // 根据筛选结果更新分类列表（用于面板显示）
+        // 但面板应始终显示全部数据中的分类，而不是筛选后的
+        // 保持 categories 不变
+
+        // 确保展开状态存在
+        categories.forEach(c => {
+          if (expandedCategories[c] === undefined) expandedCategories[c] = false;
         });
       }
-      updateSubtitle();
-      return;
-    }
 
-    var groups = {};
-    var order = [];
-    for (var j = 0; j < list.length; j++) {
-      var cat = list[j].category || '其它';
-      if (!groups[cat]) { groups[cat] = []; order.push(cat); }
-      groups[cat].push({ cafe: list[j], idx: j });
-    }
-    order.sort(compareCategory);
+      // ---------- 渲染主界面 ----------
+      function renderState() {
+        // 清除主内容
+        mainContent.innerHTML = '';
 
-    var html = '';
-    for (var g = 0; g < order.length; g++) {
-      var catName = order[g];
-      var items = groups[catName];
-      // 全局展开状态或分类单独展开状态
-      var expanded = state.allExpanded || state.expanded.has(catName);
-      var visible = expanded ? items : items.slice(0, DEFAULT_VISIBLE);
-      var hasMore = items.length > DEFAULT_VISIBLE;
+        if (isLoading) {
+          const box = document.createElement('div');
+          box.className = 'state-box';
+          box.innerHTML = '<span class="emoji">☕</span><div>正在加载咖啡馆资料…</div>';
+          mainContent.appendChild(box);
+          return;
+        }
 
-      html += '<section class="category" data-cat-section="' + escapeHtml(catName) + '">';
-      html += '<div class="cat-head">';
-      html += '<h2>' + escapeHtml(catName) + '<span class="count">' + items.length + '</span></h2>';
-      if (hasMore) {
-        html += '<button class="toggle-btn" data-cat="' + escapeHtml(catName) + '">' +
-                (expanded ? '收起' : '查看全部') + '</button>';
+        if (loadError) {
+          const box = document.createElement('div');
+          box.className = 'state-box';
+          box.innerHTML = `
+            <span class="emoji">😵</span>
+            <div>加载失败：${escapeHtml(loadError)}</div>
+            <button id="retryBtn">重试</button>
+          `;
+          mainContent.appendChild(box);
+          document.getElementById('retryBtn')?.addEventListener('click', () => {
+            fetchData();
+          });
+          return;
+        }
+
+        if (allCafes.length === 0) {
+          const box = document.createElement('div');
+          box.className = 'state-box';
+          box.innerHTML = '<span class="emoji">📭</span><div>还没有咖啡馆资料，点击刷新试试</div>';
+          mainContent.appendChild(box);
+          return;
+        }
+
+        if (filteredCafes.length === 0) {
+          const box = document.createElement('div');
+          box.className = 'state-box';
+          box.innerHTML = '<span class="emoji">🔍</span><div>没有找到符合条件的咖啡馆</div>';
+          mainContent.appendChild(box);
+          return;
+        }
+
+        // 按分类分组渲染
+        // 决定显示哪些分类：如果 activeCategory 不是"全部"，只显示该分类
+        const catsToShow = activeCategory === '全部'
+          ? categories
+          : categories.filter(c => c === activeCategory);
+
+        catsToShow.forEach(cat => {
+          const cafesInCat = filteredCafes.filter(c => c.category === cat);
+          if (cafesInCat.length === 0) return;
+
+          const section = document.createElement('section');
+          section.className = 'category-section';
+          section.dataset.category = cat;
+          section.id = 'cat-' + encodeURIComponent(cat).replace(/%/g, '');
+
+          // 分类头部
+          const header = document.createElement('div');
+          header.className = 'category-header';
+
+          const h2 = document.createElement('h2');
+          h2.innerHTML = `${escapeHtml(cat)} <span class="count">${cafesInCat.length}</span>`;
+
+          const toggleBtn = document.createElement('button');
+          toggleBtn.className = 'toggle-all-btn';
+          const isExpanded = expandedCategories[cat] === true;
+          toggleBtn.textContent = isExpanded ? '收起' : '查看全部';
+          toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            expandedCategories[cat] = !expandedCategories[cat];
+            renderState();
+            // 滚动到该分类
+            setTimeout(() => {
+              const el = document.getElementById('cat-' + encodeURIComponent(cat).replace(/%/g, ''));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+          });
+
+          header.appendChild(h2);
+          header.appendChild(toggleBtn);
+          section.appendChild(header);
+
+          // 卡片容器
+          const container = document.createElement('div');
+          container.className = 'cards-container';
+
+          if (isExpanded) {
+            // 展开：网格
+            const grid = document.createElement('div');
+            grid.className = 'cards-grid';
+            cafesInCat.forEach(cafe => {
+              grid.appendChild(createCard(cafe));
+            });
+            container.appendChild(grid);
+          } else {
+            // 收起：横向滚动，最多显示 6 张？但需求是“默认显示部分卡片”，我们可以显示全部但横向滚动
+            // 但“查看全部”后展开为网格。收起时横向滚动显示所有卡片，但视觉上只显示部分
+            // 为了体验，横向滚动显示所有卡片，用户可滑动查看
+            const scroll = document.createElement('div');
+            scroll.className = 'cards-scroll';
+            cafesInCat.forEach(cafe => {
+              scroll.appendChild(createCard(cafe));
+            });
+            container.appendChild(scroll);
+          }
+
+          section.appendChild(container);
+          mainContent.appendChild(section);
+        });
       }
-      html += '</div>';
 
-      html += '<div class="cards-row' + (expanded ? ' expanded' : '') + '" data-cat="' + escapeHtml(catName) + '">';
-      for (var v = 0; v < visible.length; v++) {
-        html += cardHTML(visible[v].cafe, visible[v].idx);
+      // ---------- 创建卡片 ----------
+      function createCard(cafe) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.id = cafe.id;
+        card.dataset.category = cafe.category;
+
+        const name = cafe.name || '未命名';
+        const address = cafe.address || '暂无地址';
+        const desc = cafe.description || '';
+        const category = cafe.category || '其它';
+        const xhs = cafe.xiaohongshu || '';
+        const hasXhs = xhs && xhs.trim() !== '';
+        const hasNav = (cafe.name || cafe.address);
+
+        // 已去过状态
+        const isVisited = !!visitedMap[cafe.id];
+
+        card.innerHTML = `
+          <div class="card-name">${escapeHtml(name)}</div>
+          <span class="card-cat">${escapeHtml(category)}</span>
+          <div class="card-address">📍 ${escapeHtml(address)}</div>
+          <div class="card-desc">${escapeHtml(desc) || '暂无描述'}</div>
+          <div class="card-actions">
+            <a class="btn-xhs ${hasXhs ? '' : 'disabled'}" 
+               href="${hasXhs ? escapeHtml(xhs) : 'javascript:void(0)'}" 
+               target="_blank" rel="noopener noreferrer"
+               ${hasXhs ? '' : 'aria-disabled="true"'}>
+              📕 小红书
+            </a>
+            <a class="btn-nav ${hasNav ? '' : 'disabled'}" 
+               href="${hasNav ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(cafe.name || cafe.address) : 'javascript:void(0)'}"
+               target="_blank" rel="noopener noreferrer"
+               ${hasNav ? '' : 'aria-disabled="true"'}>
+              🧭 导航
+            </a>
+            <button class="btn-visited ${isVisited ? 'active' : ''}" 
+                    title="${isVisited ? '标记为未去过' : '标记为已去过'}"
+                    data-id="${escapeHtml(cafe.id)}">
+              ${isVisited ? '✓' : '○'}
+            </button>
+          </div>
+        `;
+
+        // 已去过按钮事件
+        const visitedBtn = card.querySelector('.btn-visited');
+        visitedBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = visitedBtn.dataset.id;
+          if (visitedMap[id]) {
+            delete visitedMap[id];
+          } else {
+            visitedMap[id] = true;
+          }
+          saveVisited();
+          // 更新按钮状态
+          const active = !!visitedMap[id];
+          visitedBtn.classList.toggle('active', active);
+          visitedBtn.textContent = active ? '✓' : '○';
+          visitedBtn.title = active ? '标记为未去过' : '标记为已去过';
+        });
+
+        // 禁用导航按钮点击
+        const navBtn = card.querySelector('.btn-nav');
+        if (!hasNav) {
+          navBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        }
+
+        // 禁用小红书按钮点击
+        const xhsBtn = card.querySelector('.btn-xhs');
+        if (!hasXhs) {
+          xhsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        }
+
+        return card;
       }
-      html += '</div>';
-      html += '</section>';
-    }
 
-    content.innerHTML = html;
-    updateSubtitle();
-    renderCatPanel();
-  }
+      // ---------- 渲染分类选择面板 ----------
+      function renderCategoriesPanel() {
+        catOptions.innerHTML = '';
+        // 添加“全部”
+        const allBtn = document.createElement('button');
+        allBtn.textContent = '全部';
+        allBtn.className = activeCategory === '全部' ? 'active' : '';
+        allBtn.addEventListener('click', () => {
+          selectCategory('全部');
+        });
+        catOptions.appendChild(allBtn);
 
-  /* =========================================================
-     分类面板（点击“全部”打开）
-     ========================================================= */
-  function renderCatPanel() {
-    var panel = $('catPanel');
-    if (!panel) return;
-    var cats = getAllCategories();
-    if (cats.length === 0) {
-      panel.hidden = true;
-      return;
-    }
-    var html = '';
-    // 添加“全部分类”项
-    html += '<button class="cat-pill' + (state.categoryFilter === '' ? ' active' : '') + '" data-cat="__all__">全部分类</button>';
-    for (var i = 0; i < cats.length; i++) {
-      var c = cats[i];
-      html += '<button class="cat-pill' + (state.categoryFilter === c ? ' active' : '') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + '</button>';
-    }
-    panel.innerHTML = html;
-  }
+        // 添加各个分类
+        categories.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.textContent = cat;
+          btn.className = activeCategory === cat ? 'active' : '';
+          btn.addEventListener('click', () => {
+            selectCategory(cat);
+          });
+          catOptions.appendChild(btn);
+        });
+      }
 
-  function toggleCatPanel(force) {
-    var panel = $('catPanel');
-    if (!panel) return;
-    var shouldOpen = (typeof force === 'boolean') ? force : panel.hidden;
-    panel.hidden = !shouldOpen;
-    $('allToggle').classList.toggle('active', shouldOpen);
-    if (shouldOpen) renderCatPanel();
-  }
+      // ---------- 选择分类 ----------
+      function selectCategory(cat) {
+        activeCategory = cat;
+        categoryBtn.textContent = '📂 ' + cat;
+        catPanelOverlay.classList.remove('open');
+        renderCategoriesPanel();
+        applyFilters();
+        renderState();
 
-  /* =========================================================
-     数据请求
-     ========================================================= */
-  function fetchData(isUserAction) {
-    if (state.refreshing) return Promise.resolve();
-    state.refreshing = true;
-    state.error = null;
-
-    if (state.cafes.length === 0) {
-      state.loading = true;
-      render();
-    }
-
-    var sep = CSV_URL.indexOf('?') === -1 ? '?' : '&';
-    var url = CSV_URL + sep + '_ts=' + Date.now();
-
-    return fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
-      mode: 'cors',
-      redirect: 'follow'
-    })
-      .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.text();
-      })
-      .then(function (text) {
-        var rows = parseCSV(text);
-        var objs = rowsToObjects(rows);
-        var cafes = buildCafes(objs);
-
-        state.cafes = cafes;
-        state.loaded = true;
-        state.loading = false;
-        state.error = null;
-        render();
-
-        if (isUserAction && cafes.length > 0) toast('已更新 ' + cafes.length + ' 家咖啡馆');
-      })
-      .catch(function (err) {
-        state.loading = false;
-        state.error = (err && err.message) ? err.message : '网络请求失败';
-
-        if (state.cafes.length === 0) {
-          render();
+        // 如果选中的不是“全部”，滚动到该分类
+        if (cat !== '全部') {
+          // 确保分类展开
+          if (!expandedCategories[cat]) {
+            expandedCategories[cat] = true;
+          }
+          // 等待渲染后滚动
+          setTimeout(() => {
+            const el = document.getElementById('cat-' + encodeURIComponent(cat).replace(/%/g, ''));
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 80);
         } else {
-          updateSubtitle();
-          toast('刷新失败，已显示原有内容');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      })
-      .then(function () {
-        state.refreshing = false;
-      });
-  }
+      }
 
-  /* =========================================================
-     弹窗（仅随机功能使用，无二级菜单）
-     ========================================================= */
-  function renderModal() {
-    var cafe = currentCafe;
-    if (!cafe) return;
+      // ---------- 随机挑选 ----------
+      function randomPick() {
+        if (filteredCafes.length === 0) {
+          alert('没有可随机的咖啡馆');
+          return;
+        }
 
-    var visited = state.visited.has(cafe.id);
-    var navUrl = navUrlOf(cafe);
-    var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
+        // 清除之前的高亮
+        document.querySelectorAll('.card.highlighted').forEach(el => el.classList.remove('highlighted'));
 
-    var addrParts = [];
-    if (cafe.region) addrParts.push(cafe.region);
-    if (cafe.address && cafe.address !== cafe.region) addrParts.push(cafe.address);
-    var addrFull = addrParts.length ? addrParts.join(' · ') : '暂无';
+        const pick = filteredCafes[Math.floor(Math.random() * filteredCafes.length)];
+        const cardEl = document.querySelector(`.card[data-id="${CSS.escape(pick.id)}"]`);
 
-    var html = '';
-    html += '<span class="modal-cat">' + escapeHtml(cafe.category || '其它') + '</span>';
-    html += '<h2 id="modalTitle">' + escapeHtml(cafe.name || '未命名咖啡馆') + '</h2>';
-    if (visited) html += '<span class="badge-visited inline">已去过</span>';
-
-    html += '<div class="modal-section"><h3>地区 / 地址</h3><p>' +
-            escapeHtml(addrFull) + '</p></div>';
-
-    html += '<div class="modal-section"><h3>描述</h3><p>' +
-            (cafe.description ? escapeHtml(cafe.description) : '暂无') + '</p></div>';
-
-    html += '<div class="modal-actions">';
-    html += '<button class="btn ' + (visited ? 'ghost' : 'primary') + '" id="visitBtn">' +
-            (visited ? '取消已去过' : '标记为已去过') + '</button>';
-
-    if (navUrl) {
-      html += '<a class="btn outline" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>';
-    } else {
-      html += '<button class="btn outline" disabled>🧭 暂无导航资料</button>';
-    }
-
-    if (xhsUrl) {
-      html += '<a class="btn outline" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕 小红书</a>';
-    } else {
-      html += '<button class="btn outline" disabled>📕 暂无小红书链接</button>';
-    }
-    html += '</div>';
-
-    var body = $('modalBody');
-    body.innerHTML = html;
-
-    var visitBtn = $('visitBtn');
-    if (visitBtn) {
-      visitBtn.addEventListener('click', function () {
-        if (state.visited.has(cafe.id)) {
-          state.visited.delete(cafe.id);
-          toast('已取消标记');
+        if (cardEl) {
+          cardEl.classList.add('highlighted');
+          lastHighlightedCardId = pick.id;
+          cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // 3 秒后移除高亮
+          setTimeout(() => {
+            cardEl.classList.remove('highlighted');
+            if (lastHighlightedCardId === pick.id) lastHighlightedCardId = null;
+          }, 4000);
         } else {
-          state.visited.add(cafe.id);
-          toast('已标记为去过 ☕');
+          // 如果卡片不在当前 DOM 中（可能被折叠），需要先展开所在分类
+          // 找到该咖啡馆的分类
+          const cat = pick.category;
+          if (cat && !expandedCategories[cat]) {
+            expandedCategories[cat] = true;
+            renderState();
+            setTimeout(() => {
+              const newCardEl = document.querySelector(`.card[data-id="${CSS.escape(pick.id)}"]`);
+              if (newCardEl) {
+                newCardEl.classList.add('highlighted');
+                newCardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                  newCardEl.classList.remove('highlighted');
+                }, 4000);
+              }
+            }, 120);
+          } else {
+            // 再试一次
+            setTimeout(() => {
+              const el = document.querySelector(`.card[data-id="${CSS.escape(pick.id)}"]`);
+              if (el) {
+                el.classList.add('highlighted');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => el.classList.remove('highlighted'), 4000);
+              }
+            }, 100);
+          }
         }
-        saveVisited();
-        renderModal();
-        render();
-      });
-    }
-  }
-
-  function openModal(cafe) {
-    currentCafe = cafe;
-    renderModal();
-    var overlay = $('modalOverlay');
-    overlay.classList.add('open');
-    document.body.classList.add('modal-open');
-    var modal = overlay.querySelector('.modal');
-    if (modal) modal.scrollTop = 0;
-  }
-
-  function closeModal() {
-    var overlay = $('modalOverlay');
-    overlay.classList.remove('open');
-    document.body.classList.remove('modal-open');
-    currentCafe = null;
-  }
-
-  /* =========================================================
-     随机挑选（从当前可见列表中选）
-     ========================================================= */
-  function pickRandom() {
-    // 使用渲染过的列表（已过滤）
-    if (renderedList.length === 0) {
-      // 如果当前过滤后无数据，尝试从全部中挑选
-      if (state.cafes.length === 0) {
-        toast('暂无咖啡馆数据');
-        return;
       }
-      var idxAll = Math.floor(Math.random() * state.cafes.length);
-      openModal(state.cafes[idxAll]);
-      return;
-    }
-    var idx = Math.floor(Math.random() * renderedList.length);
-    openModal(renderedList[idx]);
-  }
 
-  /* =========================================================
-     横向滚动：滚轮 & 拖拽
-     ========================================================= */
-  function closestRow(el) {
-    if (!el || !el.closest) return null;
-    return el.closest('.cards-row');
-  }
-
-  document.addEventListener('wheel', function (e) {
-    var row = closestRow(e.target);
-    if (!row || row.classList.contains('expanded')) return;
-    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-    if (row.scrollWidth <= row.clientWidth + 1) return;
-    e.preventDefault();
-    row.scrollLeft += e.deltaY;
-  }, { passive: false });
-
-  var dragState = null;
-
-  document.addEventListener('mousedown', function (e) {
-    if (e.button !== 0) return;
-    var row = closestRow(e.target);
-    if (!row || row.classList.contains('expanded')) return;
-    if (row.scrollWidth <= row.clientWidth + 1) return;
-    dragState = {
-      row: row,
-      startX: e.clientX,
-      startScroll: row.scrollLeft,
-      moved: false
-    };
-  });
-
-  document.addEventListener('mousemove', function (e) {
-    if (!dragState) return;
-    var dx = e.clientX - dragState.startX;
-    if (!dragState.moved && Math.abs(dx) > 6) {
-      dragState.moved = true;
-      dragState.row.classList.add('dragging');
-    }
-    if (dragState.moved) {
-      dragState.row.scrollLeft = dragState.startScroll - dx;
-      e.preventDefault();
-    }
-  });
-
-  function endDrag() {
-    if (!dragState) return;
-    if (dragState.moved) {
-      dragState.row.classList.remove('dragging');
-      suppressClick = true;
-      setTimeout(function () { suppressClick = false; }, 80);
-    }
-    dragState = null;
-  }
-
-  document.addEventListener('mouseup', endDrag);
-  document.addEventListener('mouseleave', endDrag);
-
-  /* =========================================================
-     内容点击事件（委托）
-     ========================================================= */
-  $('content').addEventListener('click', function (e) {
-    var target = e.target;
-
-    // 1) 卡片上的按钮：导航 / 小红书 / 迷你已去过
-    var cardBtn = target.closest ? target.closest('.card-btn') : null;
-    if (cardBtn) {
-      e.stopPropagation();
-      var action = cardBtn.getAttribute('data-action');
-      if (action === 'toggle-visited') {
-        if (suppressClick) return;
-        var id = cardBtn.getAttribute('data-id');
-        if (state.visited.has(id)) {
-          state.visited.delete(id);
-          toast('已取消标记');
+      // ---------- 全部展开 / 收起 ----------
+      function toggleAllExpand() {
+        globalExpandState = !globalExpandState;
+        if (globalExpandState) {
+          // 全部展开
+          categories.forEach(c => { expandedCategories[c] = true; });
+          toggleAllBtn.textContent = '📋 全部收起';
         } else {
-          state.visited.add(id);
-          toast('已标记为去过 ☕');
+          categories.forEach(c => { expandedCategories[c] = false; });
+          toggleAllBtn.textContent = '📋 全部展开';
         }
-        saveVisited();
-        render();
+        renderState();
       }
-      // 导航/小红书按钮是 <a> 标签，让浏览器默认行为处理即可，只需阻止冒泡
-      if (action === 'nav' || action === 'xhs') {
-        if (suppressClick) e.preventDefault();
-      }
-      return;
-    }
 
-    // 2) 分类展开 / 收起
-    var toggle = target.closest ? target.closest('.toggle-btn') : null;
-    if (toggle) {
-      var cat = toggle.getAttribute('data-cat');
-      if (state.expanded.has(cat)) state.expanded.delete(cat);
-      else state.expanded.add(cat);
-      // 如果全局展开开启，先关闭全局展开
-      if (state.allExpanded) {
-        state.allExpanded = false;
-        $('expandAllBtn').textContent = '展开全部';
-      }
-      render();
-      return;
-    }
+      // ---------- 下拉刷新 ----------
+      let touchStartY = 0;
+      let pulling = false;
+      let pullDistance = 0;
+      const PULL_THRESHOLD = 70;
 
-    // 3) 点击卡片空白区域：不做任何事（取消打开弹窗）
-  });
-
-  $('content').addEventListener('keydown', function (e) {
-    // 卡片上按回车/空格不再打开弹窗，保持无二级菜单
-    // 仅保留卡片内部按钮本身的键盘操作
-  });
-
-  /* =========================================================
-     搜索 / 筛选
-     ========================================================= */
-  var searchInput = $('searchInput');
-  var clearSearch = $('clearSearch');
-  var searchTimer = null;
-
-  searchInput.addEventListener('input', function () {
-    clearSearch.hidden = searchInput.value.length === 0;
-    if (searchTimer) clearTimeout(searchTimer);
-    searchTimer = setTimeout(function () {
-      state.query = searchInput.value;
-      render();
-    }, 160);
-  });
-
-  clearSearch.addEventListener('click', function () {
-    searchInput.value = '';
-    clearSearch.hidden = true;
-    state.query = '';
-    render();
-    searchInput.focus();
-  });
-
-  $('filterRow').addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('.chip') : null;
-    if (!btn) return;
-
-    // 全部按钮（分类面板开关）
-    if (btn.id === 'allToggle') {
-      toggleCatPanel();
-      return;
-    }
-
-    // 随机按钮
-    if (btn.id === 'randomChip') {
-      pickRandom();
-      return;
-    }
-
-    // 展开全部 / 收起全部
-    if (btn.id === 'expandAllBtn') {
-      state.allExpanded = !state.allExpanded;
-      // 同时清掉单独分类的展开状态，避免冲突
-      state.expanded.clear();
-      btn.textContent = state.allExpanded ? '收起全部' : '展开全部';
-      render();
-      return;
-    }
-
-    // 普通筛选（未去过 / 已去过）
-    var filter = btn.getAttribute('data-filter');
-    if (filter) {
-      state.filter = filter;
-      // 更新激活状态
-      var chips = document.querySelectorAll('#filterRow .chip');
-      for (var i = 0; i < chips.length; i++) {
-        if (chips[i].id === 'allToggle') {
-          chips[i].classList.toggle('active', filter === 'all' && !$('catPanel').hidden === false);
-        } else if (chips[i].getAttribute('data-filter')) {
-          chips[i].classList.toggle('active', chips[i] === btn);
+      document.addEventListener('touchstart', (e) => {
+        if (window.scrollY <= 5 && !isLoading) {
+          touchStartY = e.touches[0].clientY;
+          pulling = true;
+          pullDistance = 0;
+        } else {
+          pulling = false;
         }
-      }
-      // 如果选择的是“全部”且分类面板关闭，保持 allToggle 激活
-      if (filter === 'all') {
-        $('allToggle').classList.add('active');
-      } else {
-        $('allToggle').classList.remove('active');
-      }
-      render();
-    }
-  });
+      }, { passive: true });
 
-  /* =========================================================
-     分类面板点击
-     ========================================================= */
-  $('catPanel').addEventListener('click', function (e) {
-    var pill = e.target.closest ? e.target.closest('.cat-pill') : null;
-    if (!pill) return;
-    var cat = pill.getAttribute('data-cat');
-    if (cat === '__all__') {
-      state.categoryFilter = '';
-    } else {
-      state.categoryFilter = cat;
-    }
-    // 设置激活样式
-    var pills = this.querySelectorAll('.cat-pill');
-    for (var i = 0; i < pills.length; i++) {
-      pills[i].classList.toggle('active', pills[i] === pill);
-    }
-    // 关闭面板
-    toggleCatPanel(false);
-    render();
-
-    // 如果选了具体分类，滚动到对应区域
-    if (state.categoryFilter) {
-      setTimeout(function () {
-        var section = document.querySelector('[data-cat-section="' + CSS.escape(state.categoryFilter) + '"]');
-        if (section) {
-          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        const y = e.touches[0].clientY;
+        const diff = y - touchStartY;
+        if (diff > 10 && window.scrollY <= 5) {
+          // 显示下拉指示器
+          pullDistance = Math.min(diff * 0.5, 100);
+          if (pullDistance > 20) {
+            pullIndicator.classList.add('visible');
+          }
+        } else {
+          // 如果滚动离开顶部，取消
+          if (window.scrollY > 5) {
+            pulling = false;
+            pullIndicator.classList.remove('visible');
+          }
         }
-      }, 120);
-    }
-  });
+      }, { passive: true });
 
-  /* =========================================================
-     弹窗关闭
-     ========================================================= */
-  $('modalClose').addEventListener('click', closeModal);
-  $('modalOverlay').addEventListener('click', function (e) {
-    if (e.target === $('modalOverlay')) closeModal();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && $('modalOverlay').classList.contains('open')) closeModal();
-  });
+      document.addEventListener('touchend', () => {
+        if (!pulling) return;
+        if (pullDistance > PULL_THRESHOLD && window.scrollY <= 5 && !isLoading) {
+          // 触发刷新
+          pullIndicator.classList.add('visible');
+          fetchData().finally(() => {
+            setTimeout(() => {
+              pullIndicator.classList.remove('visible');
+            }, 600);
+          });
+        } else {
+          pullIndicator.classList.remove('visible');
+        }
+        pulling = false;
+        pullDistance = 0;
+      }, { passive: true });
 
-  /* =========================================================
-     刷新按钮 & 随机按钮（顶部）
-     ========================================================= */
-  $('refreshBtn').addEventListener('click', function () {
-    var btn = this;
-    btn.classList.add('spinning');
-    fetchData(true).then(function () {
-      setTimeout(function () { btn.classList.remove('spinning'); }, 400);
-    });
-  });
+      // 鼠标滚轮横向滚动（针对 cards-scroll）
+      document.addEventListener('wheel', (e) => {
+        const scroll = e.target.closest('.cards-scroll');
+        if (scroll) {
+          if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // 已有横向滚动
+          e.preventDefault();
+          scroll.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
 
-  $('randomBtn').addEventListener('click', function () {
-    pickRandom();
-  });
+      // 鼠标拖拽横向滚动
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragScrollLeft = 0;
+      let dragTarget = null;
 
-  /* =========================================================
-     一键到顶部
-     ========================================================= */
-  var backToTop = $('backToTop');
-  var backToTopTicking = false;
-
-  function updateBackToTop() {
-    backToTopTicking = false;
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    if (y > BACK_TO_TOP_SCROLL) {
-      backToTop.classList.add('visible');
-    } else {
-      backToTop.classList.remove('visible');
-    }
-  }
-
-  window.addEventListener('scroll', function () {
-    if (backToTopTicking) return;
-    backToTopTicking = true;
-    if (window.requestAnimationFrame) {
-      window.requestAnimationFrame(updateBackToTop);
-    } else {
-      setTimeout(updateBackToTop, 60);
-    }
-  }, { passive: true });
-
-  backToTop.addEventListener('click', function () {
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      window.scrollTo(0, 0);
-    }
-  });
-
-  updateBackToTop();
-
-  /* =========================================================
-     下拉刷新
-     ========================================================= */
-  var pullEl = $('pullIndicator');
-  var pullText = $('pullText');
-  var pullStartY = null;
-  var pullDist = 0;
-
-  function updatePull(d) {
-    if (d <= 0) {
-      pullEl.style.opacity = '0';
-      pullEl.style.transform = 'translate(-50%, -60px)';
-      pullEl.classList.remove('spinning');
-      return;
-    }
-    pullEl.style.opacity = '1';
-    pullEl.style.transform = 'translate(-50%, ' + (Math.min(d, 110) - 60) + 'px)';
-    pullText.textContent = d >= PULL_THRESHOLD ? '松开刷新' : '下拉刷新';
-  }
-
-  function showRefreshingIndicator() {
-    pullEl.style.opacity = '1';
-    pullEl.style.transform = 'translate(-50%, 0px)';
-    pullEl.classList.add('spinning');
-    pullText.textContent = '正在刷新…';
-  }
-
-  function hidePullIndicator() {
-    pullEl.classList.remove('spinning');
-    updatePull(0);
-  }
-
-  document.addEventListener('touchstart', function (e) {
-    if (state.refreshing) { pullStartY = null; return; }
-    if (e.touches.length !== 1) { pullStartY = null; return; }
-    if (window.scrollY > 0) { pullStartY = null; return; }
-    if ($('modalOverlay').classList.contains('open')) { pullStartY = null; return; }
-    pullStartY = e.touches[0].clientY;
-    pullDist = 0;
-  }, { passive: true });
-
-  document.addEventListener('touchmove', function (e) {
-    if (pullStartY === null || e.touches.length !== 1) return;
-
-    var dy = e.touches[0].clientY - pullStartY;
-
-    if (dy <= 0) {
-      if (pullDist !== 0) { pullDist = 0; updatePull(0); }
-      return;
-    }
-
-    if (window.scrollY > 0) {
-      pullStartY = null;
-      pullDist = 0;
-      updatePull(0);
-      return;
-    }
-
-    pullDist = Math.min(dy * 0.5, 130);
-
-    if (pullDist > 8) {
-      if (e.cancelable) e.preventDefault();
-      updatePull(pullDist);
-    }
-  }, { passive: false });
-
-  function endPull() {
-    if (pullStartY === null) return;
-    var shouldRefresh = pullDist >= PULL_THRESHOLD;
-    pullStartY = null;
-    pullDist = 0;
-
-    if (shouldRefresh) {
-      showRefreshingIndicator();
-      fetchData(true).then(function () {
-        setTimeout(hidePullIndicator, 320);
+      document.addEventListener('mousedown', (e) => {
+        const scroll = e.target.closest('.cards-scroll');
+        if (scroll && e.button === 0) {
+          isDragging = true;
+          dragTarget = scroll;
+          dragStartX = e.pageX - scroll.offsetLeft;
+          dragScrollLeft = scroll.scrollLeft;
+          scroll.classList.add('dragging');
+          e.preventDefault();
+        }
       });
-    } else {
-      updatePull(0);
-    }
-  }
 
-  document.addEventListener('touchend', endPull, { passive: true });
-  document.addEventListener('touchcancel', function () {
-    pullStartY = null;
-    pullDist = 0;
-    updatePull(0);
-  }, { passive: true });
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging || !dragTarget) return;
+        e.preventDefault();
+        const x = e.pageX - dragTarget.offsetLeft;
+        const walk = (x - dragStartX) * 1.2;
+        dragTarget.scrollLeft = dragScrollLeft - walk;
+      });
 
-  /* =========================================================
-     PWA Manifest 注入
-     ========================================================= */
-  function injectManifest() {
-    try {
-      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
-                '<rect width="512" height="512" rx="110" fill="#8B5E3C"/>' +
-                '<ellipse cx="238" cy="300" rx="118" ry="92" fill="#FBF6F0"/>' +
-                '<ellipse cx="238" cy="292" rx="90" ry="68" fill="#6F4A2E"/>' +
-                '<path d="M356 236h44a46 46 0 0 1 0 92h-44" fill="none" stroke="#FBF6F0" stroke-width="26" stroke-linecap="round"/>' +
-                '<rect x="120" y="150" width="240" height="26" rx="13" fill="#FBF6F0"/>' +
-                '</svg>';
+      document.addEventListener('mouseup', () => {
+        if (dragTarget) {
+          dragTarget.classList.remove('dragging');
+        }
+        isDragging = false;
+        dragTarget = null;
+      });
 
-      var iconUrl = 'data:image/svg+xml;base64,' +
-        btoa(unescape(encodeURIComponent(svg)));
+      // ---------- 事件绑定 ----------
+      searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value;
+        applyFilters();
+        renderState();
+      });
 
-      var base = location.origin + location.pathname;
-      var dir = base.replace(/[^\/]*$/, '');
+      categoryBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        catPanelOverlay.classList.toggle('open');
+        renderCategoriesPanel();
+      });
 
-      var manifest = {
-        name: 'FEONG的咖啡馆收藏集',
-        short_name: '咖啡馆收藏',
-        description: '个人咖啡馆收藏与打卡记录',
-        lang: 'zh-CN',
-        start_url: base,
-        scope: dir,
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#FBF6F0',
-        theme_color: '#8B5E3C',
-        icons: [
-          { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-          { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
-          { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' }
-        ]
+      catPanelOverlay.addEventListener('click', (e) => {
+        if (e.target === catPanelOverlay) {
+          catPanelOverlay.classList.remove('open');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#catPanelOverlay') && !e.target.closest('#categoryBtn')) {
+          catPanelOverlay.classList.remove('open');
+        }
+      });
+
+      randomBtn.addEventListener('click', randomPick);
+
+      toggleAllBtn.addEventListener('click', toggleAllExpand);
+
+      refreshBtn.addEventListener('click', () => {
+        fetchData();
+      });
+
+      // 初始化
+      loadVisited();
+      fetchData();
+
+      // 暴露一些全局用于调试
+      window.__feong = {
+        reload: fetchData,
+        getData: () => allCafes,
+        getFiltered: () => filteredCafes
       };
 
-      var manifestUrl = 'data:application/manifest+json;charset=utf-8,' +
-        encodeURIComponent(JSON.stringify(manifest));
-
-      var link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = manifestUrl;
-      document.head.appendChild(link);
-
-      var appleIcon = document.createElement('link');
-      appleIcon.rel = 'apple-touch-icon';
-      appleIcon.href = iconUrl;
-      document.head.appendChild(appleIcon);
-
-      var favicon = document.createElement('link');
-      favicon.rel = 'icon';
-      favicon.href = iconUrl;
-      document.head.appendChild(favicon);
-    } catch (e) {
-      /* 静默失败 */
-    }
-  }
-
-  /* =========================================================
-     初始化
-     ========================================================= */
-  function init() {
-    injectManifest();
-    state.visited = loadVisited();
-    updatePull(0);
-    render();
-    fetchData(false);
-
-    // 给“全部”按钮加上 active 状态
-    $('allToggle').classList.add('active');
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
-</script>
+    })();
+  </script>
 </body>
 </html>
