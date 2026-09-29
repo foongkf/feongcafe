@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf7f2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="FEONG的咖啡馆收藏集 · 我的私藏咖啡馆清单">
+<title>FEONG的咖啡馆收藏集</title>
+<style>
+  :root{
+    --bg:#faf7f2;
+    --card:#ffffff;
+    --text:#2c2320;
+    --muted:#8a7a6d;
+    --accent:#a8683c;
+    --accent-soft:#f7ede4;
+    --border:#ece1d6;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  body.no-scroll{overflow:hidden;}
+
+  /* ---------- 顶部 ---------- */
+  .app-header{
+    position:sticky;top:0;z-index:30;
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;
+    padding-top:calc(14px + env(safe-area-inset-top));
+    background:rgba(250,247,242,.88);
+    -webkit-backdrop-filter:saturate(180%) blur(14px);
+    backdrop-filter:saturate(180%) blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+  .logo{font-size:24px;line-height:1;flex:0 0 auto;}
+  .brand-text{min-width:0;}
+  .brand-text h1{
+    font-size:17px;font-weight:700;margin:0;letter-spacing:.2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sub{font-size:12px;color:var(--muted);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hdr-btn{
+    flex:0 0 auto;
+    border:1px solid var(--border);background:#fff;color:var(--text);
+    border-radius:11px;padding:9px 13px;font-size:13.5px;font-weight:500;
+    font-family:inherit;cursor:pointer;transition:background .15s;
+  }
+  .hdr-btn:active{background:#f3ece5;}
+  .hdr-btn.spin{opacity:.55;pointer-events:none;}
+
+  /* ---------- 工具栏 ---------- */
+  .toolbar{
+    max-width:1200px;margin:0 auto;
+    padding:14px 16px 4px;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  }
+  .search{flex:1 1 240px;position:relative;display:flex;align-items:center;}
+  .search .ico{position:absolute;left:13px;font-size:14px;opacity:.45;pointer-events:none;line-height:1;}
+  .search input{
+    width:100%;
+    padding:11px 14px 11px 38px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--text);
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+    -webkit-appearance:none;
+  }
+  .search input::placeholder{color:#b6a698;}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .btn-random{
+    flex:0 0 auto;
+    padding:11px 17px;border-radius:12px;border:none;
+    background:var(--accent);color:#fff;
+    font-size:14.5px;font-weight:600;font-family:inherit;
+    cursor:pointer;white-space:nowrap;
+    transition:opacity .15s, transform .1s;
+    box-shadow:0 2px 8px rgba(168,104,60,.22);
+  }
+  .btn-random:active{opacity:.86;transform:scale(.98);}
+
+  /* ---------- 分类 chips ---------- */
+  .chips{
+    display:flex;gap:8px;
+    overflow-x:auto;
+    padding:12px 16px 14px;
+    max-width:1200px;margin:0 auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:#6b5b4e;
+    font-size:13.5px;
+    font-family:inherit;
+    font-weight:500;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .15s;
+    line-height:1;
+  }
+  .chip:hover{border-color:#dccbb9;}
+  .chip.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(168,104,60,.22);
+  }
+  .chip.fav.active{background:#e0574a;border-color:#e0574a;box-shadow:0 2px 8px rgba(224,87,74,.25);}
+
+  /* ---------- 卡片网格 ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(258px, 1fr));
+    gap:14px;
+    padding:0 16px 32px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:15px 16px 14px;
+    display:flex;flex-direction:column;gap:9px;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(90,60,35,.04);
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s;
+    -webkit-user-select:none;user-select:none;
+  }
+  @media (hover:hover){
+    .card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(120,80,50,.11);border-color:#e3d5c6;}
+  }
+  .card:active{transform:scale(.988);}
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .card-title{font-size:16px;font-weight:650;margin:0;line-height:1.35;letter-spacing:.1px;word-break:break-word;}
+  .fav-btn{
+    flex:0 0 auto;
+    background:none;border:none;padding:1px 3px;
+    font-size:19px;line-height:1;cursor:pointer;
+    color:#d9c9bb;font-family:inherit;
+    transition:transform .14s, color .14s;
+  }
+  .fav-btn.on{color:#e0574a;}
+  .fav-btn:active{transform:scale(1.22);}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:12px;line-height:1;
+    padding:5px 9px;border-radius:999px;
+    white-space:nowrap;
+  }
+  .tag-area{background:#eef3ee;color:#4f6b4f;}
+  .tag-cat{background:var(--accent-soft);color:#8a5a34;}
+  .card-desc{
+    margin:0;font-size:13.5px;line-height:1.6;color:var(--muted);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+    word-break:break-word;
+  }
+  .pill-xhs{
+    align-self:flex-start;
+    font-size:12.5px;font-weight:600;
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:6px 11px;border-radius:9px;
+    text-decoration:none;
+    transition:background .15s;
+  }
+  .pill-xhs:hover{background:#f0e0d2;}
+
+  /* ---------- 状态 ---------- */
+  .state{
+    grid-column:1/-1;
+    text-align:center;
+    padding:64px 20px;
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.9;
+  }
+  .state .big{font-size:34px;display:block;margin-bottom:10px;}
+  .state button{
+    margin-top:14px;
+    padding:10px 22px;border-radius:11px;border:none;
+    background:var(--accent);color:#fff;font-size:14.5px;font-weight:600;
+    font-family:inherit;cursor:pointer;
+  }
+  .loading-dot{
+    display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:var(--accent);margin-right:8px;
+    animation:pulse 1s infinite ease-in-out;
+  }
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(.8);}50%{opacity:1;transform:scale(1.15);}}
+
+  /* ---------- 底部 ---------- */
+  .footer{
+    text-align:center;
+    padding:0 16px calc(34px + env(safe-area-inset-bottom));
+    color:#b9aa9c;font-size:12.5px;line-height:1.7;
+  }
+  .footer a{color:#b9aa9c;}
+
+  /* ---------- 弹窗 ---------- */
+  .modal{position:fixed;inset:0;z-index:100;display:none;}
+  .modal.open{display:flex;align-items:flex-end;justify-content:center;}
+  .modal-backdrop{
+    position:absolute;inset:0;
+    background:rgba(45,28,16,.48);
+    -webkit-backdrop-filter:blur(3px);
+    backdrop-filter:blur(3px);
+    animation:fadeIn .2s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .modal-panel{
+    position:relative;
+    width:100%;max-width:600px;
+    background:#fffdfa;
+    border-radius:22px 22px 0 0;
+    padding:20px 20px calc(24px + env(safe-area-inset-bottom));
+    max-height:88vh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    animation:slideUp .26s cubic-bezier(.2,.85,.3,1);
+    box-shadow:0 -8px 40px rgba(60,35,15,.18);
+  }
+  @keyframes slideUp{from{transform:translateY(28px);opacity:.6;}to{transform:translateY(0);opacity:1;}}
+  @media (min-width:700px){
+    .modal.open{align-items:center;}
+    .modal-panel{border-radius:20px;max-height:82vh;animation:popIn .22s ease;}
+    @keyframes popIn{from{transform:scale(.96);opacity:.5;}to{transform:scale(1);opacity:1;}}
+  }
+  .m-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+  .m-head h2{font-size:21px;font-weight:700;margin:0 0 9px;line-height:1.35;word-break:break-word;}
+  .icon-btn{
+    flex:0 0 auto;
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--border);background:#fff;color:#8a7a6d;
+    font-size:15px;line-height:1;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:active{background:#f3ece5;}
+  .m-desc{
+    font-size:15px;line-height:1.8;color:#4e4239;
+    margin:16px 0 0;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .m-desc.muted{color:var(--muted);font-style:italic;}
+  .m-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:13px 18px;border-radius:13px;
+    font-size:15px;font-weight:600;font-family:inherit;
+    border:1px solid transparent;cursor:pointer;text-decoration:none;
+    flex:1 1 auto;min-width:130px;
+    transition:opacity .15s, background .15s;
+  }
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 3px 12px rgba(168,104,60,.25);}
+  .btn-primary:active{opacity:.87;}
+  .btn-ghost{background:#fff;border-color:var(--border);color:var(--text);}
+  .btn-ghost.on{color:#e0574a;border-color:#f3cfca;background:#fdf3f2;}
+  .btn-ghost:active{background:#f7f1ea;}
+
+  /* ---------- 移动端微调 ---------- */
+  @media (max-width:520px){
+    .brand-text h1{font-size:15.5px;}
+    .logo{font-size:21px;}
+    .hdr-btn{padding:8px 11px;font-size:13px;}
+    .grid{grid-template-columns:1fr;gap:12px;padding:0 12px 28px;}
+    .toolbar{padding:12px 12px 2px;}
+    .chips{padding:10px 12px 12px;}
+    .app-header{padding-left:12px;padding-right:12px;}
+    .btn-random{flex:1 1 100%;}
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <span class="logo">☕</span>
+    <div class="brand-text">
+      <h1>FEONG的咖啡馆收藏集</h1>
+      <p class="sub" id="countText">正在载入…</p>
+    </div>
+  </div>
+  <button class="hdr-btn" id="refreshBtn" type="button">↻ 刷新</button>
+</header>
+
+<div class="toolbar">
+  <div class="search">
+    <span class="ico">🔍</span>
+    <input id="searchInput" type="search" placeholder="搜索名字、地区、分类或描述…" autocomplete="off" enterkeyhint="search">
+  </div>
+  <button class="btn-random" id="randomBtn" type="button">🎲 随机挑一间</button>
+</div>
+
+<div class="chips" id="chips"></div>
+
+<main class="grid" id="grid"></main>
+
+<footer class="footer">
+  数据来自 Google Sheet，打开页面即自动同步最新内容<br>
+  © FEONG 的私人咖啡馆清单
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-panel" id="modalPanel" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= 配置 ================= */
+  // Google Sheet 发布为 CSV 的链接（自动由 pubhtml 转换而来）
+  var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv';
+
+  // 直接读取失败时的备用代理（跨域兜底）
+  var PROXIES = [
+    function (u) { return u; },
+    function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); }
+  ];
+
+  // 分类显示顺序（不在此列表内的分类会自动排到后面）
+  var CAT_ORDER = ['cafe','dessert','bar','western','thai','korean','japanese',
+                   'kopitiam','nyonya','chinese','asian','fine dine','hatyai','其它'];
+
+  var FAV_KEY = 'feong_cafe_favs_v1';
+
+  /* ================= 状态 ================= */
+  var state = {
+    all: [],
+    view: [],
+    cat: '全部',
+    onlyFav: false,
+    q: '',
+    loading: true,
+    error: ''
+  };
+  var favs = loadFavs();
+  var currentId = null;
+
+  /* ================= DOM ================= */
+  var gridEl      = document.getElementById('grid');
+  var chipsEl     = document.getElementById('chips');
+  var countEl     = document.getElementById('countText');
+  var searchEl    = document.getElementById('searchInput');
+  var randomBtn   = document.getElementById('randomBtn');
+  var refreshBtn  = document.getElementById('refreshBtn');
+  var modalEl     = document.getElementById('modal');
+  var modalPanel  = document.getElementById('modalPanel');
+
+  /* ================= 工具函数 ================= */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function normalizeKey(s) {
+    return String(s == null ? '' : s)
+      .toLowerCase()
+      .replace(/[\s\u3000_\-—–:：·.。/\\()（）\[\]]/g, '');
+  }
+
+  // 处理小红书链接（允许只填 www.xxx 或 xhslink.com/xxx）
+  function normalizeUrl(u) {
+    u = String(u == null ? '' : u).trim();
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^(www\.|xhslink\.|xiaohongshu\.|m\.xiaohongshu\.)/i.test(u)) return 'https://' + u;
+    if (/\.(com|cn|net|org|me|cc|link)\b/i.test(u)) return 'https://' + u;
+    return '';
+  }
+
+  /* ================= 本地收藏 ================= */
+  function loadFavs() {
+    try {
+      var raw = localStorage.getItem(FAV_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+  function saveFavs() {
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favs)));
+    } catch (e) { /* 忽略隐私模式下的写入失败 */ }
+  }
+
+  /* ================= CSV 解析 ================= */
+  function parseCSV(text) {
+    text = String(text || '').replace(/^\uFEFF/, '');
+    var rows = [], row = [], field = '', inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQ) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else { inQ = false; }
+        } else {
+          field += c;
+        }
+      } else {
+        if (c === '"') { inQ = true; }
+        else if (c === ',') { row.push(field); field = ''; }
+        else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+        else if (c === '\r') { /* 跳过 */ }
+        else { field += c; }
+      }
+    }
+    row.push(field);
+    if (row.length > 1 || String(row[0]).trim() !== '') rows.push(row);
+    return rows;
+  }
+
+  /* ================= 数据组装 ================= */
+  function findCol(headers, keys) {
+    for (var i = 0; i < headers.length; i++) {
+      for (var j = 0; j < keys.length; j++) {
+        if (headers[i] === keys[j] || headers[i].indexOf(keys[j]) !== -1) return i;
+      }
+    }
+    return -1;
+  }
+
+  function buildItems(rows) {
+    if (!rows || !rows.length) return [];
+
+    var firstRowText = rows[0].join('|').toLowerCase();
+    var headerWords = ['名字','名称','店名','地区','区域','分类','类别','描述','简介','小红书','链接',
+                       'name','area','location','category','description','desc','url','link','note','remark'];
+    var hasHeader = false;
+    for (var w = 0; w < headerWords.length; w++) {
+      if (firstRowText.indexOf(headerWords[w]) !== -1) { hasHeader = true; break; }
+    }
+
+    var DEF = { name: 0, area: 1, url: 2, cat: 3, desc: 4 };
+    var col, dataRows;
+
+    if (hasHeader) {
+      var h = rows[0].map(normalizeKey);
+      col = {
+        name: findCol(h, ['名字','名称','店名','cafe名','name','title']),
+        area: findCol(h, ['地区','区域','地点','位置','area','location','region','district']),
+        url:  findCol(h, ['小红书链接','小红书','链接','网址','xhs','xiaohongshu','link','url']),
+        cat:  findCol(h, ['分类','类别','类型','category','type','tag']),
+        desc: findCol(h, ['描述','简介','介绍','备注','说明','description','desc','note','remark'])
+      };
+      for (var k in DEF) {
+        if (col[k] < 0) col[k] = DEF[k];
+      }
+      dataRows = rows.slice(1);
+    } else {
+      col = DEF;
+      dataRows = rows;
+    }
+
+    var items = [];
+    dataRows.forEach(function (r) {
+      var get = function (idx) {
+        return (idx >= 0 && idx < r.length) ? String(r[idx] == null ? '' : r[idx]).trim() : '';
+      };
+      var name = get(col.name);
+      if (!name) return;
+
+      var area = get(col.area);
+      var category = get(col.cat) || '其它';
+      var desc = get(col.desc);
+      var url = normalizeUrl(get(col.url));
+
+      items.push({
+        id: (name + '|' + area).toLowerCase(),
+        name: name,
+        area: area,
+        category: category,
+        categoryKey: category.toLowerCase(),
+        desc: desc,
+        url: url
+      });
+    });
+
+    return items;
+  }
+
+  /* ================= 网络请求 ================= */
+  function fetchWithTimeout(url, ms) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () {
+        reject(new Error('请求超时'));
+      }, ms);
+      fetch(url, { cache: 'no-store', redirect: 'follow' })
+        .then(function (res) { clearTimeout(timer); resolve(res); })
+        .catch(function (err) { clearTimeout(timer); reject(err); });
+    });
+  }
+
+  function fetchCSVText() {
+    var lastErr = null;
+    var chain = Promise.reject();
+
+    PROXIES.forEach(function (make) {
+      chain = chain.catch(function () {
+        var url = make(CSV_URL);
+        return fetchWithTimeout(url, 15000).then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.text();
+        }).then(function (text) {
+          if (!text || text.trim().length < 5) throw new Error('返回内容为空');
+          if (text.trim().charAt(0) === '<') throw new Error('返回的不是 CSV 数据');
+          return text;
+        }).catch(function (err) {
+          lastErr = err;
+          throw err;
+        });
+      });
+    });
+
+    return chain.catch(function () {
+      throw new Error((lastErr && lastErr.message) ? lastErr.message : '网络请求失败');
+    });
+  }
+
+  /* ================= 渲染：分类 ================= */
+  function buildChips() {
+    var seen = {};
+    var cats = [];
+    state.all.forEach(function (it) {
+      if (it.category && !seen[it.categoryKey]) {
+        seen[it.categoryKey] = true;
+        cats.push(it.category);
+      }
+    });
+    cats.sort(function (a, b) {
+      var ia = CAT_ORDER.indexOf(a.toLowerCase());
+      var ib = CAT_ORDER.indexOf(b.toLowerCase());
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+
+    // 若当前选中分类已不存在，重置
+    if (state.cat !== '全部') {
+      var stillThere = cats.some(function (c) { return c === state.cat; });
+      if (!stillThere) state.cat = '全部';
+    }
+
+    var html = chipHTML('全部', state.cat === '全部', false);
+    cats.forEach(function (c) {
+      html += chipHTML(c, state.cat === c, false);
+    });
+    html += chipHTML('❤ 收藏', state.onlyFav, true);
+
+    chipsEl.innerHTML = html;
+  }
+
+  function chipHTML(label, active, isFav) {
+    var value = isFav ? '__fav__' : label;
+    return '<button type="button" class="chip' + (isFav ? ' fav' : '') + (active ? ' active' : '') +
+           '" data-value="' + esc(value) + '">' + esc(label) + '</button>';
+  }
+
+  function updateChipActive() {
+    var chips = chipsEl.querySelectorAll('.chip');
+    for (var i = 0; i < chips.length; i++) {
+      var v = chips[i].getAttribute('data-value');
+      var active;
+      if (v === '__fav__') active = state.onlyFav;
+      else active = (state.cat === v);
+      if (active) chips[i].classList.add('active');
+      else chips[i].classList.remove('active');
+    }
+  }
+
+  /* ================= 渲染：卡片 ================= */
+  function cardHTML(it) {
+    var isFav = favs.has(it.id);
+    var html = '<article class="card" data-id="' + esc(it.id) + '">';
+
+    html += '<div class="card-head">';
+    html += '<h3 class="card-title">' + esc(it.name) + '</h3>';
+    html += '<button type="button" class="fav-btn' + (isFav ? ' on' : '') +
+            '" data-fav="' + esc(it.id) + '" aria-label="收藏">' + (isFav ? '♥' : '♡') + '</button>';
+    html += '</div>';
+
+    if (it.area || it.category) {
+      html += '<div class="tags">';
+      if (it.area) html += '<span class="tag tag-area">📍 ' + esc(it.area) + '</span>';
+      if (it.category) html += '<span class="tag tag-cat">' + esc(it.category) + '</span>';
+      html += '</div>';
+    }
+
+    if (it.desc) {
+      html += '<p class="card-desc">' + esc(it.desc) + '</p>';
+    }
+
+    if (it.url) {
+      html += '<a class="pill-xhs" href="' + esc(it.url) +
+              '" target="_blank" rel="noopener noreferrer">小红书 ↗</a>';
+    }
+
+    html += '</article>';
+    return html;
+  }
+
+  function render() {
+    if (state.loading) {
+      gridEl.innerHTML = '<div class="state"><span class="loading-dot"></span>正在读取咖啡馆收藏…</div>';
+      updateCount();
+      return;
+    }
+
+    if (state.error) {
+      gridEl.innerHTML =
+        '<div class="state"><span class="big">😵</span>读取失败：' + esc(state.error) +
+        '<br><span style="font-size:13px">请检查网络，或确认 Google Sheet 已发布为 CSV</span>' +
+        '<br><button type="button" id="retryBtn">重新加载</button></div>';
+      updateCount();
+      return;
+    }
+
+    if (!state.view.length) {
+      var msg = state.onlyFav && !state.all.length ? '还没有任何记录'
+              : state.onlyFav ? '你还没有收藏任何咖啡馆'
+              : (state.all.length ? '没有找到符合条件的咖啡馆 🥲' : '表格里还没有数据');
+      gridEl.innerHTML = '<div class="state"><span class="big">☕</span>' + esc(msg) + '</div>';
+      updateCount();
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < state.view.length; i++) {
+      html += cardHTML(state.view[i]);
+    }
+    gridEl.innerHTML = html;
+    updateCount();
+  }
+
+  function updateCount() {
+    if (state.loading) {
+      countEl.textContent = '正在载入…';
+    } else if (state.error) {
+      countEl.textContent = '载入失败';
+    } else if (state.view.length === state.all.length) {
+      countEl.textContent = '共收藏 ' + state.all.length + ' 间咖啡馆';
+    } else {
+      countEl.textContent = '显示 ' + state.view.length + ' / ' + state.all.length + ' 间';
+    }
+  }
+
+  /* ================= 筛选 ================= */
+  function applyFilter() {
+    var q = state.q.trim().toLowerCase();
+    var cat = state.cat.toLowerCase();
+
+    state.view = state.all.filter(function (it) {
+      if (state.cat !== '全部' && it.categoryKey !== cat) return false;
+      if (state.onlyFav && !favs.has(it.id)) return false;
+      if (q) {
+        var hay = (it.name + ' ' + it.area + ' ' + it.category + ' ' + it.desc).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    render();
+  }
+
+  /* ================= 弹窗 ================= */
+  function modalHTML(it) {
+    var isFav = favs.has(it.id);
+
+    var html = '<div class="m-head"><div style="min-width:0">';
+    html += '<h2>' + esc(it.name) + '</h2>';
+    if (it.area || it.category) {
+      html += '<div class="tags">';
+      if (it.area) html += '<span class="tag tag-area">📍 ' + esc(it.area) + '</span>';
+      if (it.category) html += '<span class="tag tag-cat">' + esc(it.category) + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '<button type="button" class="icon-btn" data-close="1" aria-label="关闭">✕</button></div>';
+
+    html += it.desc
+      ? '<p class="m-desc">' + esc(it.desc) + '</p>'
+      : '<p class="m-desc muted">暂无描述</p>';
+
+    html += '<div class="m-actions">';
+    if (it.url) {
+      html += '<a class="btn btn-primary" href="' + esc(it.url) +
+              '" target="_blank" rel="noopener noreferrer">在小红书查看 ↗</a>';
+    }
+    html += '<button type="button" class="btn btn-ghost' + (isFav ? ' on' : '') +
+            '" data-fav="' + esc(it.id) + '">' + (isFav ? '♥ 已收藏' : '♡ 加入收藏') + '</button>';
+    html += '</div>';
+
+    return html;
+  }
+
+  function openModal(id) {
+    var it = null;
+    for (var i = 0; i < state.all.length; i++) {
+      if (state.all[i].id === id) { it = state.all[i]; break; }
+    }
+    if (!it) return;
+
+    currentId = id;
+    modalPanel.innerHTML = modalHTML(it);
+    modalEl.classList.add('open');
+    modalEl.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('no-scroll');
+    modalPanel.scrollTop = 0;
+  }
+
+  function closeModal() {
+    modalEl.classList.remove('open');
+    modalEl.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('no-scroll');
+    currentId = null;
+  }
+
+  function syncModalFav(id) {
+    if (!currentId || currentId !== id) return;
+    var btn = modalPanel.querySelector('[data-fav]');
+    if (!btn) return;
+    var isFav = favs.has(id);
+    btn.classList.toggle('on', isFav);
+    btn.textContent = isFav ? '♥ 已收藏' : '♡ 加入收藏';
+  }
+
+  /* ================= 收藏切换 ================= */
+  function toggleFav(id) {
+    if (favs.has(id)) favs.delete(id);
+    else favs.add(id);
+    saveFavs();
+
+    applyFilter();      // 重新渲染卡片
+    syncModalFav(id);   // 同步弹窗按钮
+  }
+
+  /* ================= 事件绑定 ================= */
+  // 卡片区域（含收藏、链接、重试）
+  gridEl.addEventListener('click', function (e) {
+    var target = e.target;
+
+    var favBtn = target.closest ? target.closest('[data-fav]') : null;
+    if (favBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFav(favBtn.getAttribute('data-fav'));
+      return;
+    }
+
+    if (target.closest && target.closest('a')) return; // 让链接正常跳转
+
+    var retry = target.closest ? target.closest('#retryBtn') : null;
+    if (retry) { load(); return; }
+
+    var card = target.closest ? target.closest('.card') : null;
+    if (card) openModal(card.getAttribute('data-id'));
+  });
+
+  // 弹窗
+  modalEl.addEventListener('click', function (e) {
+    var target = e.target;
+
+    if (target.closest && target.closest('[data-close]')) {
+      closeModal();
+      return;
+    }
+
+    var favBtn = target.closest ? target.closest('[data-fav]') : null;
+    if (favBtn) {
+      e.preventDefault();
+      toggleFav(favBtn.getAttribute('data-fav'));
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc') closeModal();
+  });
+
+  // 分类切换
+  chipsEl.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('.chip') : null;
+    if (!chip) return;
+    var v = chip.getAttribute('data-value');
+    if (v === '__fav__') {
+      state.onlyFav = !state.onlyFav;
+    } else {
+      state.cat = v;
+    }
+    updateChipActive();
+    applyFilter();
+  });
+
+  // 搜索
+  var searchTimer = null;
+  searchEl.addEventListener('input', function () {
+    var val = searchEl.value;
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.q = val;
+      applyFilter();
+    }, 180);
+  });
+
+  // 随机
+  randomBtn.addEventListener('click', function () {
+    if (!state.view.length) {
+      if (state.loading) return;
+      alert('目前没有可挑选的咖啡馆～');
+      return;
+    }
+    var pick = state.view[Math.floor(Math.random() * state.view.length)];
+    openModal(pick.id);
+  });
+
+  // 刷新
+  refreshBtn.addEventListener('click', function () {
+    load();
+  });
+
+  /* ================= 加载流程 ================= */
+  function load() {
+    state.loading = true;
+    state.error = '';
+    render();
+    refreshBtn.classList.add('spin');
+    refreshBtn.textContent = '↻ 同步中';
+
+    fetchCSVText().then(function (text) {
+      var rows = parseCSV(text);
+      state.all = buildItems(rows);
+      state.loading = false;
+      buildChips();
+      applyFilter();
+    }).catch(function (err) {
+      state.loading = false;
+      state.error = (err && err.message) ? err.message : '未知错误';
+      render();
+    }).then(function () {
+      refreshBtn.classList.remove('spin');
+      refreshBtn.textContent = '↻ 刷新';
+    });
+  }
+
+  // 页面重新可见时自动同步（超过 5 分钟）
+  var lastLoad = Date.now();
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && Date.now() - lastLoad > 5 * 60 * 1000 && !state.loading) {
+      lastLoad = Date.now();
+      load();
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
