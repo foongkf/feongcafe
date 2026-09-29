@@ -1035,3 +1035,810 @@
 
   /* =========================================================
      链接处理
+     ========================================================= */
+  function normalizeXhsUrl(raw) {
+    var xhs = String(raw == null ? '' : raw).trim();
+    if (!xhs) return '';
+    if (/^https?:\/\//i.test(xhs)) return xhs;
+    if (/^(www\.|xhslink\.|xiaohongshu\.|xhs\.)/i.test(xhs)) return 'https://' + xhs;
+    return '';
+  }
+
+  function navUrlOf(cafe) {
+    var dest = (cafe.name || '').trim() || (cafe.address || '').trim() || (cafe.region || '').trim();
+    if (!dest) return '';
+    return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest);
+  }
+
+  /* =========================================================
+     过滤
+     ========================================================= */
+  function matches(cafe) {
+    var q = state.query.trim().toLowerCase();
+    if (q) {
+      var hay = (cafe.name + ' ' + cafe.region + ' ' + cafe.address + ' ' +
+                 cafe.description + ' ' + cafe.category).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    var visited = state.visited.has(cafe.id);
+    if (state.filter === 'visited' && !visited) return false;
+    if (state.filter === 'todo' && visited) return false;
+    return true;
+  }
+
+  /* =========================================================
+     渲染
+     ========================================================= */
+  function updateSubtitle() {
+    var sub = $('subtitle');
+    if (state.loading && state.cafes.length === 0) {
+      sub.textContent = '正在加载咖啡馆资料…';
+      return;
+    }
+    if (state.error && state.cafes.length === 0) {
+      sub.textContent = '加载失败，请重试';
+      return;
+    }
+    var total = state.cafes.length;
+    var visitedCount = 0;
+    for (var i = 0; i < state.cafes.length; i++) {
+      if (state.visited.has(state.cafes[i].id)) visitedCount++;
+    }
+    sub.textContent = '共 ' + total + ' 家咖啡馆 · 已去过 ' + visitedCount + ' 家';
+  }
+
+  /* 卡片 HTML：包含导航、小红书、迷你已去过按钮 */
+  function cardHTML(cafe, idx) {
+    var visited = state.visited.has(cafe.id);
+    var name = cafe.name || '未命名咖啡馆';
+
+    var regionText = (cafe.region || cafe.address || '').trim();
+    var regionShow = regionText ? truncate(regionText, 30) : '暂无地区';
+
+    var desc = cafe.description ? truncate(cafe.description, 64) : '暂无描述';
+
+    var navUrl = navUrlOf(cafe);
+    var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
+
+    var navBtn = navUrl
+      ? '<a class="card-btn primary" data-action="nav" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>'
+      : '<button class="card-btn primary" type="button" disabled>🧭</button>';
+
+    var xhsBtn = xhsUrl
+      ? '<a class="card-btn" data-action="xhs" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕</a>'
+      : '<button class="card-btn" type="button" disabled>📕</button>';
+
+    var visitBtn = '<button class="card-btn mini ' + (visited ? 'is-visited' : '') + '" data-action="toggle-visited" data-id="' + escapeHtml(cafe.id) + '" title="' + (visited ? '取消已去过' : '标记已去过') + '">' +
+      (visited ? '✓' : '○') + '</button>';
+
+    return '<article class="card" data-idx="' + idx + '" aria-label="' + escapeHtml(name) + '">' +
+      (visited ? '<span class="badge-visited">已去过</span>' : '') +
+      '<h3 class="card-title">' + escapeHtml(name) + '</h3>' +
+      '<span class="card-cat">' + escapeHtml(cafe.category || '其它') + '</span>' +
+      '<p class="card-addr">📍 ' + escapeHtml(regionShow) + '</p>' +
+      '<p class="card-desc">' + escapeHtml(desc) + '</p>' +
+      '<div class="card-actions">' +
+        navBtn +
+        xhsBtn +
+        visitBtn +
+      '</div>' +
+      '</article>';
+  }
+
+  /* 构建分类下拉列表 */
+  function buildCategoryDropdown(groups, order) {
+    var dd = $('catDropdown');
+    if (!dd) return;
+    if (!order || order.length === 0) {
+      dd.innerHTML = '<div style="padding:10px;color:#8A7A70;font-size:13px;">暂无分类</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < order.length; i++) {
+      var cat = order[i];
+      var count = groups[cat] ? groups[cat].length : 0;
+      html += '<button class="cat-dropdown-item" role="menuitem" data-cat="' + escapeHtml(cat) + '">' +
+              '<span>' + escapeHtml(cat) + '</span>' +
+              '<span class="cat-count">' + count + '</span>' +
+              '</button>';
+    }
+    dd.innerHTML = html;
+  }
+
+  function render() {
+    var content = $('content');
+
+    if (state.cafes.length === 0) {
+      if (state.loading) {
+        content.innerHTML = '<div class="state-box"><div class="spinner"></div><p>正在加载咖啡馆资料…</p></div>';
+      } else if (state.error) {
+        content.innerHTML =
+          '<div class="state-box">' +
+            '<div class="big-icon">😕</div>' +
+            '<p>加载失败：' + escapeHtml(state.error) + '</p>' +
+            '<button class="btn primary" id="retryBtn">重试</button>' +
+          '</div>';
+        var retry = $('retryBtn');
+        if (retry) retry.addEventListener('click', function () { fetchData(true); });
+      } else {
+        content.innerHTML =
+          '<div class="state-box">' +
+            '<div class="big-icon">☕</div>' +
+            '<p>暂时还没有咖啡馆资料，稍后再来看看吧。</p>' +
+          '</div>';
+      }
+      updateSubtitle();
+      buildCategoryDropdown({}, []);
+      return;
+    }
+
+    var list = [];
+    for (var i = 0; i < state.cafes.length; i++) {
+      if (matches(state.cafes[i])) list.push(state.cafes[i]);
+    }
+    renderedList = list;
+
+    if (list.length === 0) {
+      var hasFilter = state.query.trim() !== '' || state.filter !== 'all';
+      content.innerHTML =
+        '<div class="state-box">' +
+          '<div class="big-icon">🔍</div>' +
+          '<p>' + (hasFilter ? '没有找到符合条件的咖啡馆。' : '暂时还没有咖啡馆资料。') + '</p>' +
+          (hasFilter ? '<button class="btn outline" id="resetBtn">清除筛选</button>' : '') +
+        '</div>';
+      var rb = $('resetBtn');
+      if (rb) {
+        rb.addEventListener('click', function () {
+          state.query = '';
+          state.filter = 'all';
+          $('searchInput').value = '';
+          $('clearSearch').hidden = true;
+          var chips = document.querySelectorAll('#filterRow .chip');
+          for (var k = 0; k < chips.length; k++) {
+            chips[k].classList.toggle('active', chips[k].getAttribute('data-filter') === 'all');
+          }
+          render();
+        });
+      }
+      updateSubtitle();
+      buildCategoryDropdown({}, []);
+      return;
+    }
+
+    // 分组
+    var groups = {};
+    var order = [];
+    for (var j = 0; j < list.length; j++) {
+      var cat = list[j].category || '其它';
+      if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+      groups[cat].push({ cafe: list[j], idx: j });
+    }
+    order.sort(compareCategory);
+
+    // 构建分类下拉
+    buildCategoryDropdown(groups, order);
+
+    // 记录用于跳转的数据
+    state.categoryIndex = {};
+    state.lastRenderedGroups = order;
+    for (var c = 0; c < order.length; c++) {
+      state.categoryIndex[order[c]] = c;
+    }
+
+    var html = '';
+    for (var g = 0; g < order.length; g++) {
+      var catName = order[g];
+      var items = groups[catName];
+      var expanded = state.expanded.has(catName);
+      var visible = expanded ? items : items.slice(0, DEFAULT_VISIBLE);
+      var hasMore = items.length > DEFAULT_VISIBLE;
+
+      html += '<section class="category" data-cat="' + escapeHtml(catName) + '" id="cat-' + encodeURIComponent(catName) + '">';
+      html += '<div class="cat-head">';
+      html += '<h2>' + escapeHtml(catName) + '<span class="count">' + items.length + '</span></h2>';
+      if (hasMore) {
+        html += '<button class="toggle-btn" data-cat="' + escapeHtml(catName) + '">' +
+                (expanded ? '收起' : '查看全部') + '</button>';
+      }
+      html += '</div>';
+
+      html += '<div class="cards-row' + (expanded ? ' expanded' : '') + '" data-cat="' + escapeHtml(catName) + '">';
+      for (var v = 0; v < visible.length; v++) {
+        html += cardHTML(visible[v].cafe, visible[v].idx);
+      }
+      html += '</div>';
+      html += '</section>';
+    }
+
+    content.innerHTML = html;
+    updateSubtitle();
+  }
+
+  /* =========================================================
+     数据请求
+     ========================================================= */
+  function fetchData(isUserAction) {
+    if (state.refreshing) return Promise.resolve();
+    state.refreshing = true;
+    state.error = null;
+
+    if (state.cafes.length === 0) {
+      state.loading = true;
+      render();
+    }
+
+    var sep = CSV_URL.indexOf('?') === -1 ? '?' : '&';
+    var url = CSV_URL + sep + '_ts=' + Date.now();
+
+    return fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      mode: 'cors',
+      redirect: 'follow'
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        var rows = parseCSV(text);
+        var objs = rowsToObjects(rows);
+        var cafes = buildCafes(objs);
+
+        state.cafes = cafes;
+        state.loaded = true;
+        state.loading = false;
+        state.error = null;
+        render();
+
+        if (isUserAction && cafes.length > 0) toast('已更新 ' + cafes.length + ' 家咖啡馆');
+      })
+      .catch(function (err) {
+        state.loading = false;
+        state.error = (err && err.message) ? err.message : '网络请求失败';
+
+        if (state.cafes.length === 0) {
+          render();
+        } else {
+          updateSubtitle();
+          toast('刷新失败，已显示原有内容');
+        }
+      })
+      .then(function () {
+        state.refreshing = false;
+      });
+  }
+
+  /* =========================================================
+     弹窗（仅用于随机推荐；详情卡片已无二级菜单）
+     ========================================================= */
+  var currentCafe = null;
+
+  function renderModal() {
+    var cafe = currentCafe;
+    if (!cafe) return;
+
+    var visited = state.visited.has(cafe.id);
+    var navUrl = navUrlOf(cafe);
+    var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
+
+    var addrParts = [];
+    if (cafe.region) addrParts.push(cafe.region);
+    if (cafe.address && cafe.address !== cafe.region) addrParts.push(cafe.address);
+    var addrFull = addrParts.length ? addrParts.join(' · ') : '暂无';
+
+    var html = '';
+    html += '<span class="modal-cat">' + escapeHtml(cafe.category || '其它') + '</span>';
+    html += '<h2 id="modalTitle">' + escapeHtml(cafe.name || '未命名咖啡馆') + '</h2>';
+    if (visited) html += '<span class="badge-visited inline">已去过</span>';
+
+    html += '<div class="modal-section"><h3>地区 / 地址</h3><p>' +
+            escapeHtml(addrFull) + '</p></div>';
+
+    html += '<div class="modal-section"><h3>描述</h3><p>' +
+            (cafe.description ? escapeHtml(cafe.description) : '暂无') + '</p></div>';
+
+    html += '<div class="modal-actions">';
+    html += '<button class="btn ' + (visited ? 'ghost' : 'primary') + '" id="visitBtn">' +
+            (visited ? '取消已去过' : '标记为已去过') + '</button>';
+
+    if (navUrl) {
+      html += '<a class="btn outline" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>';
+    } else {
+      html += '<button class="btn outline" disabled>🧭 暂无导航资料</button>';
+    }
+
+    if (xhsUrl) {
+      html += '<a class="btn outline" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕 小红书</a>';
+    } else {
+      html += '<button class="btn outline" disabled>📕 暂无小红书链接</button>';
+    }
+    html += '</div>';
+
+    var body = $('modalBody');
+    body.innerHTML = html;
+
+    var visitBtn = $('visitBtn');
+    if (visitBtn) {
+      visitBtn.addEventListener('click', function () {
+        if (state.visited.has(cafe.id)) {
+          state.visited.delete(cafe.id);
+          toast('已取消标记');
+        } else {
+          state.visited.add(cafe.id);
+          toast('已标记为去过 ☕');
+        }
+        saveVisited();
+        renderModal();
+        render();
+      });
+    }
+  }
+
+  function openModal(cafe) {
+    currentCafe = cafe;
+    renderModal();
+    var overlay = $('modalOverlay');
+    overlay.classList.add('open');
+    document.body.classList.add('modal-open');
+    var modal = overlay.querySelector('.modal');
+    if (modal) modal.scrollTop = 0;
+  }
+
+  function closeModal() {
+    var overlay = $('modalOverlay');
+    overlay.classList.remove('open');
+    document.body.classList.remove('modal-open');
+    currentCafe = null;
+  }
+
+  /* =========================================================
+     横向滚动：滚轮 & 拖拽
+     ========================================================= */
+  function closestRow(el) {
+    if (!el || !el.closest) return null;
+    return el.closest('.cards-row');
+  }
+
+  document.addEventListener('wheel', function (e) {
+    var row = closestRow(e.target);
+    if (!row || row.classList.contains('expanded')) return;
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    if (row.scrollWidth <= row.clientWidth + 1) return;
+    e.preventDefault();
+    row.scrollLeft += e.deltaY;
+  }, { passive: false });
+
+  var dragState = null;
+
+  document.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    var row = closestRow(e.target);
+    if (!row || row.classList.contains('expanded')) return;
+    if (row.scrollWidth <= row.clientWidth + 1) return;
+    dragState = {
+      row: row,
+      startX: e.clientX,
+      startScroll: row.scrollLeft,
+      moved: false
+    };
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!dragState) return;
+    var dx = e.clientX - dragState.startX;
+    if (!dragState.moved && Math.abs(dx) > 6) {
+      dragState.moved = true;
+      dragState.row.classList.add('dragging');
+    }
+    if (dragState.moved) {
+      dragState.row.scrollLeft = dragState.startScroll - dx;
+      e.preventDefault();
+    }
+  });
+
+  function endDrag() {
+    if (!dragState) return;
+    if (dragState.moved) {
+      dragState.row.classList.remove('dragging');
+      suppressClick = true;
+      setTimeout(function () { suppressClick = false; }, 80);
+    }
+    dragState = null;
+  }
+
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('mouseleave', endDrag);
+
+  /* =========================================================
+     内容点击事件（委托）
+     ========================================================= */
+  $('content').addEventListener('click', function (e) {
+    var target = e.target;
+
+    // 卡片上的按钮（导航 / 小红书 / 迷你已去过）
+    var cardBtn = target.closest ? target.closest('.card-btn') : null;
+    if (cardBtn) {
+      var action = cardBtn.getAttribute('data-action');
+
+      if (action === 'toggle-visited') {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = cardBtn.getAttribute('data-id');
+        if (state.visited.has(id)) {
+          state.visited.delete(id);
+          toast('已取消标记');
+        } else {
+          state.visited.add(id);
+          toast('已标记为去过 ☕');
+        }
+        saveVisited();
+        render(); // 重新渲染以更新状态
+        return;
+      }
+
+      // 导航 / 小红书：正常打开链接，不触发任何卡片行为
+      if (suppressClick) e.preventDefault();
+      return;
+    }
+
+    // 分类展开 / 收起
+    var toggle = target.closest ? target.closest('.toggle-btn') : null;
+    if (toggle) {
+      var cat = toggle.getAttribute('data-cat');
+      if (state.expanded.has(cat)) state.expanded.delete(cat);
+      else state.expanded.add(cat);
+      render();
+      return;
+    }
+
+    // 卡片本身不再打开二级菜单（没有任何点击行为）
+    // 故意留空
+  });
+
+  /* =========================================================
+     搜索 / 筛选
+     ========================================================= */
+  var searchInput = $('searchInput');
+  var clearSearch = $('clearSearch');
+  var searchTimer = null;
+
+  searchInput.addEventListener('input', function () {
+    clearSearch.hidden = searchInput.value.length === 0;
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.query = searchInput.value;
+      render();
+    }, 160);
+  });
+
+  clearSearch.addEventListener('click', function () {
+    searchInput.value = '';
+    clearSearch.hidden = true;
+    state.query = '';
+    render();
+    searchInput.focus();
+  });
+
+  $('filterRow').addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('.chip') : null;
+    if (!btn) return;
+    state.filter = btn.getAttribute('data-filter') || 'all';
+    var chips = document.querySelectorAll('#filterRow .chip');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle('active', chips[i] === btn);
+    }
+    render();
+  });
+
+  /* =========================================================
+     工具栏：全部展开 / 全部收起 / 分类跳转 / 随机
+     ========================================================= */
+  $('expandAllBtn').addEventListener('click', function () {
+    // 收集当前渲染的分类（在 state.lastRenderedGroups）
+    if (!state.lastRenderedGroups || state.lastRenderedGroups.length === 0) {
+      toast('暂无分类可展开');
+      return;
+    }
+    for (var i = 0; i < state.lastRenderedGroups.length; i++) {
+      state.expanded.add(state.lastRenderedGroups[i]);
+    }
+    render();
+    toast('已展开全部分类');
+  });
+
+  $('collapseAllBtn').addEventListener('click', function () {
+    state.expanded.clear();
+    render();
+    toast('已收起全部分类');
+  });
+
+  // 分类跳转
+  var catJumpBtn = $('catJumpBtn');
+  var catDropdown = $('catDropdown');
+
+  catJumpBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var isOpen = catDropdown.classList.contains('open');
+    if (isOpen) {
+      catDropdown.classList.remove('open');
+      catJumpBtn.setAttribute('aria-expanded', 'false');
+    } else {
+      catDropdown.classList.add('open');
+      catJumpBtn.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  // 点击下拉项跳转
+  catDropdown.addEventListener('click', function (e) {
+    var item = e.target.closest ? e.target.closest('.cat-dropdown-item') : null;
+    if (!item) return;
+    var cat = item.getAttribute('data-cat');
+    catDropdown.classList.remove('open');
+    catJumpBtn.setAttribute('aria-expanded', 'false');
+
+    // 确保该分类展开（如果它未展开，则展开）
+    if (!state.expanded.has(cat)) {
+      state.expanded.add(cat);
+      render();
+    }
+
+    // 滚动到对应分类
+    setTimeout(function () {
+      var el = document.getElementById('cat-' + encodeURIComponent(cat));
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        toast('未找到该分类');
+      }
+    }, 60);
+  });
+
+  // 点击页面其他地方关闭下拉
+  document.addEventListener('click', function (e) {
+    if (catDropdown.classList.contains('open')) {
+      if (!catJumpBtn.contains(e.target) && !catDropdown.contains(e.target)) {
+        catDropdown.classList.remove('open');
+        catJumpBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+  });
+
+  // 随机按钮
+  $('randomBtn').addEventListener('click', function () {
+    if (renderedList.length === 0) {
+      toast('当前列表没有咖啡馆');
+      return;
+    }
+    var idx = Math.floor(Math.random() * renderedList.length);
+    var cafe = renderedList[idx];
+    if (!cafe) return;
+    openModal(cafe);
+  });
+
+  /* =========================================================
+     弹窗关闭
+     ========================================================= */
+  $('modalClose').addEventListener('click', closeModal);
+  $('modalOverlay').addEventListener('click', function (e) {
+    if (e.target === $('modalOverlay')) closeModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('modalOverlay').classList.contains('open')) closeModal();
+  });
+
+  /* =========================================================
+     刷新按钮
+     ========================================================= */
+  $('refreshBtn').addEventListener('click', function () {
+    var btn = this;
+    btn.classList.add('spinning');
+    fetchData(true).then(function () {
+      setTimeout(function () { btn.classList.remove('spinning'); }, 400);
+    });
+  });
+
+  /* =========================================================
+     一键到顶部
+     ========================================================= */
+  var backToTop = $('backToTop');
+  var backToTopTicking = false;
+
+  function updateBackToTop() {
+    backToTopTicking = false;
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (y > BACK_TO_TOP_SCROLL) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  }
+
+  window.addEventListener('scroll', function () {
+    if (backToTopTicking) return;
+    backToTopTicking = true;
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(updateBackToTop);
+    } else {
+      setTimeout(updateBackToTop, 60);
+    }
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function () {
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      window.scrollTo(0, 0);
+    }
+  });
+
+  updateBackToTop();
+
+  /* =========================================================
+     下拉刷新
+     ========================================================= */
+  var pullEl = $('pullIndicator');
+  var pullText = $('pullText');
+  var pullStartY = null;
+  var pullDist = 0;
+
+  function updatePull(d) {
+    if (d <= 0) {
+      pullEl.style.opacity = '0';
+      pullEl.style.transform = 'translate(-50%, -60px)';
+      pullEl.classList.remove('spinning');
+      return;
+    }
+    pullEl.style.opacity = '1';
+    pullEl.style.transform = 'translate(-50%, ' + (Math.min(d, 110) - 60) + 'px)';
+    pullText.textContent = d >= PULL_THRESHOLD ? '松开刷新' : '下拉刷新';
+  }
+
+  function showRefreshingIndicator() {
+    pullEl.style.opacity = '1';
+    pullEl.style.transform = 'translate(-50%, 0px)';
+    pullEl.classList.add('spinning');
+    pullText.textContent = '正在刷新…';
+  }
+
+  function hidePullIndicator() {
+    pullEl.classList.remove('spinning');
+    updatePull(0);
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    if (state.refreshing) { pullStartY = null; return; }
+    if (e.touches.length !== 1) { pullStartY = null; return; }
+    if (window.scrollY > 0) { pullStartY = null; return; }
+    if ($('modalOverlay').classList.contains('open')) { pullStartY = null; return; }
+    pullStartY = e.touches[0].clientY;
+    pullDist = 0;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function (e) {
+    if (pullStartY === null || e.touches.length !== 1) return;
+
+    var dy = e.touches[0].clientY - pullStartY;
+
+    if (dy <= 0) {
+      if (pullDist !== 0) { pullDist = 0; updatePull(0); }
+      return;
+    }
+
+    if (window.scrollY > 0) {
+      pullStartY = null;
+      pullDist = 0;
+      updatePull(0);
+      return;
+    }
+
+    pullDist = Math.min(dy * 0.5, 130);
+
+    if (pullDist > 8) {
+      if (e.cancelable) e.preventDefault();
+      updatePull(pullDist);
+    }
+  }, { passive: false });
+
+  function endPull() {
+    if (pullStartY === null) return;
+    var shouldRefresh = pullDist >= PULL_THRESHOLD;
+    pullStartY = null;
+    pullDist = 0;
+
+    if (shouldRefresh) {
+      showRefreshingIndicator();
+      fetchData(true).then(function () {
+        setTimeout(hidePullIndicator, 320);
+      });
+    } else {
+      updatePull(0);
+    }
+  }
+
+  document.addEventListener('touchend', endPull, { passive: true });
+  document.addEventListener('touchcancel', function () {
+    pullStartY = null;
+    pullDist = 0;
+    updatePull(0);
+  }, { passive: true });
+
+  /* =========================================================
+     PWA Manifest 注入
+     ========================================================= */
+  function injectManifest() {
+    try {
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+                '<rect width="512" height="512" rx="110" fill="#8B5E3C"/>' +
+                '<ellipse cx="238" cy="300" rx="118" ry="92" fill="#FBF6F0"/>' +
+                '<ellipse cx="238" cy="292" rx="90" ry="68" fill="#6F4A2E"/>' +
+                '<path d="M356 236h44a46 46 0 0 1 0 92h-44" fill="none" stroke="#FBF6F0" stroke-width="26" stroke-linecap="round"/>' +
+                '<rect x="120" y="150" width="240" height="26" rx="13" fill="#FBF6F0"/>' +
+                '</svg>';
+
+      var iconUrl = 'data:image/svg+xml;base64,' +
+        btoa(unescape(encodeURIComponent(svg)));
+
+      var base = location.origin + location.pathname;
+      var dir = base.replace(/[^\/]*$/, '');
+
+      var manifest = {
+        name: 'FEONG的咖啡馆收藏集',
+        short_name: '咖啡馆收藏',
+        description: '个人咖啡馆收藏与打卡记录',
+        lang: 'zh-CN',
+        start_url: base,
+        scope: dir,
+        display: 'standalone',
+        orientation: 'portrait',
+        background_color: '#FBF6F0',
+        theme_color: '#8B5E3C',
+        icons: [
+          { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+          { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
+          { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' }
+        ]
+      };
+
+      var manifestUrl = 'data:application/manifest+json;charset=utf-8,' +
+        encodeURIComponent(JSON.stringify(manifest));
+
+      var link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestUrl;
+      document.head.appendChild(link);
+
+      var appleIcon = document.createElement('link');
+      appleIcon.rel = 'apple-touch-icon';
+      appleIcon.href = iconUrl;
+      document.head.appendChild(appleIcon);
+
+      var favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      favicon.href = iconUrl;
+      document.head.appendChild(favicon);
+    } catch (e) {
+      /* 静默失败 */
+    }
+  }
+
+  /* =========================================================
+     初始化
+     ========================================================= */
+  function init() {
+    injectManifest();
+    state.visited = loadVisited();
+    updatePull(0);
+    render();
+    fetchData(false);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
