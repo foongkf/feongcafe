@@ -649,7 +649,7 @@ body{
   </div>
   <div class="toolbar">
     <button id="btnAll" class="tool-btn primary" type="button">全部 <span class="caret">▾</span></button>
-    <button id="btnOpenAll" class="tool-btn" type="button">打开所有</button>
+    <button id="btnOpenAll" class="tool-btn primary" type="button">收起全部</button>
     <button id="btnRandom" class="tool-btn" type="button">🎲 随机</button>
   </div>
   <div id="catPanel" class="cat-panel"></div>
@@ -671,7 +671,7 @@ body{
   /* ====================== 状态 ====================== */
   var allData = [];
   var activeCategory = "全部";
-  var openAll = false;
+  var openAll = true;          /* 默认主页直接展示全部资料卡 */
   var panelOpen = false;
   var searchTerm = "";
   var refreshing = false;
@@ -950,7 +950,7 @@ body{
         '<div class="hint-card">' +
           '<div class="hint-emoji">☕</div>' +
           '<p class="hint-title">点击「全部」展开分类目录</p>' +
-          '<p class="hint-sub">或点击「打开所有」查看全部咖啡馆卡片</p>' +
+          '<p class="hint-sub">或点击「收起全部 / 打开所有」切换卡片显示</p>' +
         "</div>";
       return;
     }
@@ -1136,7 +1136,7 @@ body{
     }
   });
 
-  /* ====================== 交互：打开所有 ====================== */
+  /* ====================== 交互：打开所有 / 收起全部 ====================== */
   btnOpenAll.addEventListener("click", function () {
     openAll = !openAll;
     if (openAll) {
@@ -1362,14 +1362,9 @@ body{
     pullDist = 0;
   }, { passive: true });
 
-  /* 桌面端 / 鼠标滚轮在页面顶部时不做处理，避免影响正常滚动 */
-
   /* ====================== 启动 ====================== */
   setPull(0);
   loadData(true);
-
-  /* 页面重新可见时（从后台切回）不自动刷新，避免打断操作；
-     如需刷新可下拉或点击重试按钮。 */
 
 })();
 </script>
