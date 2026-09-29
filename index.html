@@ -71,8 +71,13 @@
     color:var(--muted);
   }
 
-  .refresh-icon{
+  .header-actions{
+    display:flex;
+    gap:8px;
     flex:0 0 auto;
+  }
+
+  .icon-btn{
     width:38px;height:38px;
     border-radius:50%;
     border:1px solid var(--border);
@@ -82,11 +87,14 @@
     line-height:1;
     cursor:pointer;
     box-shadow:var(--shadow);
-    transition:transform .3s ease, background .2s;
+    transition:transform .2s ease, background .2s;
     display:flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+    padding:0;
   }
-  .refresh-icon:active{ transform:scale(.94); }
-  .refresh-icon.spinning{ animation:spin .9s linear infinite; }
+  .icon-btn:active{ transform:scale(.94); }
+  .icon-btn.spinning{ animation:spin .9s linear infinite; }
+  .icon-btn.dice{ font-size:19px; }
 
   .search-box{ position:relative; margin-top:14px; }
 
@@ -125,13 +133,22 @@
   }
 
   /* ---------- 筛选行 ---------- */
+  .filter-row-wrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:12px;
+  }
+
   .filter-row{
     display:flex;
     gap:8px;
-    margin-top:12px;
     overflow-x:auto;
     padding-bottom:2px;
     scrollbar-width:none;
+    flex:1 1 auto;
+    min-width:0;
   }
   .filter-row::-webkit-scrollbar{ display:none; }
 
@@ -146,7 +163,7 @@
     cursor:pointer;
     font-family:inherit;
     font-weight:600;
-    transition:background .18s,color .18s,border-color .18s, box-shadow .18s;
+    transition:background .18s,color .18s,border-color .18s;
     -webkit-tap-highlight-color:transparent;
     display:inline-flex;
     align-items:center;
@@ -158,103 +175,86 @@
     border-color:var(--primary);
     color:#fff;
   }
-  .chip .caret{
-    font-size:10px;
-    opacity:.85;
-    transition:transform .2s;
-  }
-  .chip.open .caret{ transform:rotate(180deg); }
+  .chip .caret{ font-size:9px; opacity:.8; }
 
-  .chip.collapse-chip{
-    background:#F6EDE4;
-    border-color:#E8D6C4;
-    color:var(--primary-dark);
+  .expand-toggle{
+    flex:0 0 auto;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--primary);
+    border-radius:999px;
+    height:34px;
+    padding:0 14px;
+    font-size:12.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:var(--shadow);
+    -webkit-tap-highlight-color:transparent;
+    transition:background .18s,color .18s,border-color .18s;
   }
-  .chip.collapse-chip:active{ background:#EFE0D0; }
+  .expand-toggle:active{ transform:scale(.96); }
 
-  .chip.random-chip{
-    background:linear-gradient(135deg,#F3E1CE,#E8CDAF);
-    border-color:#E0C4A3;
-    color:var(--primary-dark);
-    font-weight:800;
-  }
-  .chip.random-chip:active{ transform:scale(.96); }
-  @media (hover:hover){
-    .chip.random-chip:hover{
-      background:var(--primary);
-      border-color:var(--primary);
-      color:#fff;
-    }
-  }
-
-  /* ---------- 分类选择面板 ---------- */
-  .cat-picker{
-    margin-top:10px;
+  /* 分类下拉菜单 */
+  .cat-menu{
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    min-width:210px;
+    max-height:300px;
+    overflow-y:auto;
     background:#fff;
     border:1px solid var(--border);
     border-radius:14px;
-    box-shadow:var(--shadow);
-    padding:10px 10px 12px;
-    animation:slideDown .2s ease;
+    box-shadow:var(--shadow-lg);
+    padding:6px;
+    z-index:60;
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(-6px);
+    transition:opacity .18s ease, transform .18s ease, visibility .18s ease;
+    -webkit-overflow-scrolling:touch;
   }
-  .cat-picker[hidden]{ display:none; }
-
-  @keyframes slideDown{
-    from{ opacity:0; transform:translateY(-6px); }
-    to{ opacity:1; transform:translateY(0); }
+  .cat-menu.open{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
   }
-
-  .cat-picker-title{
-    font-size:11.5px;
-    font-weight:800;
-    color:var(--muted);
-    letter-spacing:.6px;
-    padding:2px 6px 8px;
-  }
-
-  .cat-picker-list{
+  .cat-menu button{
     display:flex;
-    flex-wrap:wrap;
-    gap:7px;
-  }
-
-  .cat-pick-btn{
-    border:1px solid var(--border);
-    background:#FBF6F0;
-    color:var(--primary-dark);
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    width:100%;
+    border:none;
+    background:transparent;
+    color:var(--text);
     font-family:inherit;
-    font-size:12.5px;
-    font-weight:700;
-    padding:7px 13px;
-    border-radius:999px;
+    font-size:13.5px;
+    font-weight:600;
+    text-align:left;
+    padding:10px 12px;
+    border-radius:9px;
     cursor:pointer;
-    transition:background .18s, border-color .18s, color .18s, transform .12s;
     -webkit-tap-highlight-color:transparent;
-    max-width:100%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
   }
-  .cat-pick-btn:active{ transform:scale(.96); }
-  @media (hover:hover){
-    .cat-pick-btn:hover{
-      background:var(--primary);
-      border-color:var(--primary);
-      color:#fff;
-    }
+  .cat-menu button:active,
+  .cat-menu button.current{ background:#F6EDE4; color:var(--primary-dark); }
+  .cat-menu button .n{
+    font-size:11px;
+    font-weight:700;
+    color:var(--primary);
+    background:#F3E7DA;
+    border-radius:999px;
+    padding:1px 7px;
+    flex:0 0 auto;
   }
 
   /* ---------- 主体 ---------- */
   main{ padding-bottom:50px; }
 
-  .category{
-    margin-top:16px;
-    border-radius:18px;
-    transition:background .35s ease;
-  }
-  .category.highlight{
-    background:rgba(217,168,124,.22);
-  }
+  .category{ margin-top:16px; scroll-margin-top:16px; }
 
   .cat-head{
     display:flex;
@@ -323,7 +323,7 @@
 
   .cards-row.expanded{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(min(100%,232px),1fr));
+    grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));
     overflow-x:visible;
     scroll-snap-type:none;
   }
@@ -338,16 +338,92 @@
     border-radius:var(--radius);
     border:1px solid var(--border);
     box-shadow:var(--shadow);
-    padding:14px 14px 12px;
+    padding:12px 14px 14px;
     scroll-snap-align:start;
     display:flex;
     flex-direction:column;
     gap:6px;
-    min-height:212px;
+    min-height:196px;
     transition:box-shadow .18s ease;
+    -webkit-tap-highlight-color:transparent;
   }
   @media (hover:hover){
     .card:hover{ box-shadow:0 8px 22px rgba(139,94,60,.16); }
+  }
+
+  /* 卡片顶部操作条 */
+  .card-top{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:-2px -2px 4px;
+  }
+
+  .mini-btn{
+    flex:0 0 auto;
+    height:28px;
+    padding:0 9px;
+    border-radius:9px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--primary-dark);
+    font-size:11.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    white-space:nowrap;
+    text-decoration:none;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .16s,border-color .16s,color .16s,transform .12s;
+  }
+  .mini-btn:active{ transform:scale(.95); }
+  .mini-btn.primary{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:#fff;
+  }
+  @media (hover:hover){
+    .mini-btn.primary:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
+    .mini-btn:not(.primary):hover{ border-color:var(--accent); color:var(--primary); }
+  }
+  .mini-btn[disabled], .mini-btn.disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+
+  .visit-mini{
+    margin-left:auto;
+    flex:0 0 auto;
+    height:28px;
+    min-width:28px;
+    padding:0 9px;
+    border-radius:999px;
+    border:1px dashed var(--border);
+    background:#fff;
+    color:var(--muted);
+    font-size:11.5px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    white-space:nowrap;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .16s,border-color .16s,color .16s,transform .12s;
+  }
+  .visit-mini:active{ transform:scale(.95); }
+  .visit-mini.on{
+    background:#E6F4E8;
+    border:1px solid #B6DFBB;
+    border-style:solid;
+    color:#2E7D32;
   }
 
   .card-title{
@@ -358,7 +434,6 @@
     color:var(--text);
     word-break:break-word;
   }
-  .card.visited .card-title{ padding-right:58px; }
 
   .card-cat{
     align-self:flex-start;
@@ -394,87 +469,6 @@
     word-break:break-word;
   }
 
-  .card-actions{
-    display:flex;
-    gap:6px;
-    margin-top:auto;
-    padding-top:11px;
-  }
-
-  .card-btn{
-    flex:1 1 0;
-    min-width:0;
-    height:33px;
-    padding:0 5px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:#fff;
-    color:var(--primary-dark);
-    font-size:12px;
-    font-weight:700;
-    font-family:inherit;
-    text-decoration:none;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:3px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    transition:background .18s, border-color .18s, color .18s, transform .12s;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .card-btn.primary{
-    background:var(--primary);
-    border-color:var(--primary);
-    color:#fff;
-  }
-  @media (hover:hover){
-    .card-btn.primary:hover{ background:var(--primary-dark); border-color:var(--primary-dark); }
-    .card-btn:not(.primary):not(.is-visited):hover{ border-color:var(--accent); color:var(--primary); }
-  }
-  .card-btn:active{ transform:scale(.96); }
-
-  .card-btn.visited-btn{
-    background:#FBF6F0;
-    border-color:#E8D6C4;
-    color:var(--muted);
-  }
-  .card-btn.visited-btn.is-visited{
-    background:#E6F4E8;
-    border-color:#BEE0C3;
-    color:#2E7D32;
-  }
-  @media (hover:hover){
-    .card-btn.visited-btn:hover{ border-color:var(--accent); color:var(--primary-dark); }
-    .card-btn.visited-btn.is-visited:hover{ border-color:#9CCFA4; color:#246B28; }
-  }
-
-  .card-btn[disabled]{
-    opacity:.42;
-    cursor:not-allowed;
-    pointer-events:none;
-  }
-
-  .badge-visited{
-    position:absolute;
-    top:10px;
-    right:10px;
-    background:#E6F4E8;
-    color:#2E7D32;
-    font-size:11px;
-    font-weight:700;
-    padding:3px 9px;
-    border-radius:999px;
-    letter-spacing:.3px;
-  }
-  .badge-visited.inline{
-    position:static;
-    display:inline-block;
-    margin-top:6px;
-  }
-
   /* ---------- 状态块 ---------- */
   .state-box{
     display:flex;
@@ -499,7 +493,7 @@
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
-  /* ---------- 通用按钮 ---------- */
+  /* ---------- 按钮 ---------- */
   .btn{
     display:inline-flex;
     align-items:center;
@@ -528,138 +522,6 @@
     opacity:.5;
     cursor:not-allowed;
     pointer-events:none;
-  }
-
-  /* ---------- 随机弹窗 ---------- */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(59,47,42,.48);
-    -webkit-backdrop-filter:blur(3px);
-    backdrop-filter:blur(3px);
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    opacity:0;
-    visibility:hidden;
-    transition:opacity .24s ease, visibility .24s ease;
-    z-index:150;
-  }
-  .modal-overlay.open{ opacity:1; visibility:visible; }
-
-  .modal{
-    position:relative;
-    width:100%;
-    max-width:520px;
-    background:var(--card);
-    border-radius:22px 22px 0 0;
-    max-height:88vh;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding:26px 20px calc(22px + env(safe-area-inset-bottom));
-    transform:translateY(30px);
-    transition:transform .3s cubic-bezier(.22,1,.36,1);
-    box-shadow:var(--shadow-lg);
-  }
-  .modal-overlay.open .modal{ transform:translateY(0); }
-
-  @media (min-width:640px){
-    .modal-overlay{ align-items:center; padding:24px; }
-    .modal{
-      border-radius:22px;
-      transform:translateY(14px) scale(.96);
-    }
-    .modal-overlay.open .modal{ transform:none; }
-  }
-
-  .modal-close{
-    position:absolute;
-    top:12px; right:12px;
-    width:34px;height:34px;
-    border-radius:50%;
-    border:none;
-    background:#F4EBE2;
-    color:var(--muted);
-    font-size:20px;
-    line-height:1;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .modal-close:active{ transform:scale(.94); }
-
-  .modal-tag-random{
-    display:inline-block;
-    font-size:11px;
-    font-weight:800;
-    color:#fff;
-    background:linear-gradient(135deg,#C98C55,#A96B36);
-    padding:3px 10px;
-    border-radius:999px;
-    letter-spacing:.6px;
-    margin-bottom:10px;
-  }
-
-  .modal-cat{
-    display:inline-block;
-    font-size:11.5px;
-    font-weight:700;
-    color:var(--primary);
-    background:#F6EDE4;
-    padding:3px 10px;
-    border-radius:999px;
-    margin:0 0 10px 6px;
-  }
-
-  .modal h2{
-    margin:0 0 6px;
-    font-size:21px;
-    line-height:1.35;
-    color:var(--primary-dark);
-    padding-right:36px;
-    word-break:break-word;
-  }
-
-  .modal-section{
-    margin-top:18px;
-    padding-top:16px;
-    border-top:1px dashed var(--border);
-  }
-  .modal-section h3{
-    margin:0 0 6px;
-    font-size:12.5px;
-    font-weight:800;
-    color:var(--muted);
-    letter-spacing:.6px;
-  }
-  .modal-section p{
-    margin:0;
-    font-size:14px;
-    line-height:1.65;
-    color:var(--text);
-    white-space:pre-wrap;
-    word-break:break-word;
-  }
-
-  .modal-actions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:22px;
-  }
-  .modal-actions .btn{ flex:1 1 128px; }
-
-  .modal-actions .btn.random-again{
-    background:linear-gradient(135deg,#F3E1CE,#E8CDAF);
-    border-color:#E0C4A3;
-    color:var(--primary-dark);
-  }
-  @media (hover:hover){
-    .modal-actions .btn.random-again:hover{
-      background:var(--primary);
-      border-color:var(--primary);
-      color:#fff;
-    }
   }
 
   /* ---------- 一键到顶部 ---------- */
@@ -701,6 +563,123 @@
     }
   }
   .back-to-top:active{ transform:scale(.92); }
+
+  /* ---------- 弹窗（随机推荐 / 详情） ---------- */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(59,47,42,.45);
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity .22s ease, visibility .22s ease;
+    z-index:100;
+  }
+  .modal-overlay.open{ opacity:1; visibility:visible; }
+
+  .modal{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    background:var(--card);
+    border-radius:22px 22px 0 0;
+    max-height:88vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:24px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(26px);
+    transition:transform .28s cubic-bezier(.22,1,.36,1);
+    box-shadow:var(--shadow-lg);
+  }
+  .modal-overlay.open .modal{ transform:translateY(0); }
+
+  @media (min-width:640px){
+    .modal-overlay{ align-items:center; padding:24px; }
+    .modal{ border-radius:22px; transform:translateY(14px) scale(.97); }
+    .modal-overlay.open .modal{ transform:none; }
+  }
+
+  .modal-close{
+    position:absolute;
+    top:12px; right:12px;
+    width:34px;height:34px;
+    border-radius:50%;
+    border:none;
+    background:#F4EBE2;
+    color:var(--muted);
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    z-index:2;
+  }
+
+  .modal-cat{
+    display:inline-block;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--primary);
+    background:#F6EDE4;
+    padding:3px 10px;
+    border-radius:999px;
+    margin-bottom:10px;
+  }
+
+  .modal h2{
+    margin:0 0 6px;
+    font-size:21px;
+    line-height:1.35;
+    color:var(--primary-dark);
+    padding-right:36px;
+    word-break:break-word;
+  }
+
+  .modal-section{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px dashed var(--border);
+  }
+  .modal-section h3{
+    margin:0 0 6px;
+    font-size:12.5px;
+    font-weight:800;
+    color:var(--muted);
+    letter-spacing:.6px;
+  }
+  .modal-section p{
+    margin:0;
+    font-size:14px;
+    line-height:1.65;
+    color:var(--text);
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  .modal-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:22px;
+  }
+  .modal-actions .btn{ flex:1 1 130px; }
+
+  .modal-dice-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:11.5px;
+    font-weight:700;
+    color:#8A6A1F;
+    background:#FBF1D8;
+    border-radius:999px;
+    padding:3px 10px;
+    margin-bottom:10px;
+    margin-left:6px;
+  }
 
   /* ---------- 下拉刷新 ---------- */
   .pull-indicator{
@@ -763,7 +742,10 @@
   <div class="wrap">
     <div class="header-top">
       <h1>☕ FEONG的咖啡馆收藏集</h1>
-      <button class="refresh-icon" id="refreshBtn" aria-label="刷新数据" title="刷新数据">↻</button>
+      <div class="header-actions">
+        <button class="icon-btn dice" id="randomBtn" aria-label="随机推荐一家咖啡馆" title="随机推荐">🎲</button>
+        <button class="icon-btn" id="refreshBtn" aria-label="刷新数据" title="刷新数据">↻</button>
+      </div>
     </div>
     <p class="subtitle" id="subtitle">正在加载咖啡馆资料…</p>
 
@@ -773,19 +755,15 @@
       <button class="clear-btn" id="clearSearch" hidden aria-label="清除搜索">×</button>
     </div>
 
-    <div class="filter-row" id="filterRow">
-      <button class="chip active" id="allFilterChip" data-filter="all" type="button">
-        全部 <span class="caret">▾</span>
-      </button>
-      <button class="chip" data-filter="todo" type="button">未去过</button>
-      <button class="chip" data-filter="visited" type="button">已去过</button>
-      <button class="chip random-chip" id="randomBtn" type="button">🎲 随机</button>
-      <button class="chip collapse-chip" id="collapseAllBtn" type="button">⇱ 全部收起</button>
-    </div>
+    <div class="filter-row-wrap">
+      <div class="filter-row" id="filterRow">
+        <button class="chip active" data-filter="all">全部 <span class="caret">▾</span></button>
+        <button class="chip" data-filter="todo">未去过</button>
+        <button class="chip" data-filter="visited">已去过</button>
+      </div>
+      <button class="expand-toggle" id="expandToggle" title="展开/收起全部分类">全部展开</button>
 
-    <div class="cat-picker" id="catPicker" hidden>
-      <div class="cat-picker-title">选择分类 · 快速跳转</div>
-      <div class="cat-picker-list" id="catPickerList"></div>
+      <div class="cat-menu" id="catMenu"></div>
     </div>
   </div>
 </header>
@@ -794,10 +772,10 @@
 
 <button class="back-to-top" id="backToTop" aria-label="回到顶部" title="回到顶部">↑</button>
 
-<div class="modal-overlay" id="randomOverlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="randomModalTitle">
-    <button class="modal-close" id="randomModalClose" aria-label="关闭">×</button>
-    <div id="randomModalBody"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+    <div id="modalBody"></div>
   </div>
 </div>
 
@@ -822,7 +800,7 @@
     query: '',
     filter: 'all',
     expanded: new Set(),
-    catPickerOpen: false,
+    allExpanded: false,      // 全局展开状态
     loading: false,
     refreshing: false,
     loaded: false,
@@ -830,7 +808,8 @@
   };
 
   var renderedList = [];
-  var currentRandomCafe = null;
+  var currentCafe = null;
+  var isRandomModal = false;
   var suppressClick = false;
 
   /* =========================================================
@@ -858,7 +837,7 @@
     t.textContent = msg;
     t.classList.add('show');
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
   }
 
   /* =========================================================
@@ -1081,13 +1060,6 @@
     return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest);
   }
 
-  function addressFullOf(cafe) {
-    var parts = [];
-    if (cafe.region) parts.push(cafe.region);
-    if (cafe.address && cafe.address !== cafe.region) parts.push(cafe.address);
-    return parts.length ? parts.join(' · ') : '暂无';
-  }
-
   /* =========================================================
      过滤
      ========================================================= */
@@ -1105,7 +1077,30 @@
   }
 
   /* =========================================================
-     顶部状态文案
+     当前可见列表 & 分类数据（供随机、分类菜单使用）
+     ========================================================= */
+  function currentVisibleList() {
+    var list = [];
+    for (var i = 0; i < state.cafes.length; i++) {
+      if (matches(state.cafes[i])) list.push(state.cafes[i]);
+    }
+    return list;
+  }
+
+  function groupByCategory(list) {
+    var groups = {};
+    var order = [];
+    for (var i = 0; i < list.length; i++) {
+      var cat = list[i].category || '其它';
+      if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+      groups[cat].push(list[i]);
+    }
+    order.sort(compareCategory);
+    return { groups: groups, order: order };
+  }
+
+  /* =========================================================
+     渲染
      ========================================================= */
   function updateSubtitle() {
     var sub = $('subtitle');
@@ -1125,113 +1120,56 @@
     sub.textContent = '共 ' + total + ' 家咖啡馆 · 已去过 ' + visitedCount + ' 家';
   }
 
-  /* =========================================================
-     卡片 HTML
-     ========================================================= */
   function cardHTML(cafe, idx) {
     var visited = state.visited.has(cafe.id);
     var name = cafe.name || '未命名咖啡馆';
 
     var regionText = (cafe.region || cafe.address || '').trim();
     var regionShow = regionText ? truncate(regionText, 30) : '暂无地区';
-
     var desc = cafe.description ? truncate(cafe.description, 64) : '暂无描述';
 
     var navUrl = navUrlOf(cafe);
     var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
 
-    var actions =
-      '<div class="card-actions">' +
-        (navUrl
-          ? '<a class="card-btn primary" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer" title="用 Google 地图导航">🧭 导航</a>'
-          : '<button class="card-btn primary" type="button" disabled title="暂无导航资料">🧭 导航</button>') +
+    return '<article class="card" data-idx="' + idx + '">' +
+      '<div class="card-top">' +
         (xhsUrl
-          ? '<a class="card-btn" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer" title="打开小红书">📕 小红书</a>'
-          : '<button class="card-btn" type="button" disabled title="暂无小红书链接">📕 小红书</button>') +
-        '<button class="card-btn visited-btn' + (visited ? ' is-visited' : '') + '" type="button" data-action="visited" data-idx="' + idx + '" title="切换已去过状态">' +
-          (visited ? '✓ 已去过' : '✓ 去过') +
+          ? '<a class="mini-btn" data-action="xhs" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕 小红书</a>'
+          : '<button class="mini-btn" type="button" disabled>📕 小红书</button>') +
+        (navUrl
+          ? '<a class="mini-btn primary" data-action="nav" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>'
+          : '<button class="mini-btn primary" type="button" disabled>🧭 导航</button>') +
+        '<button class="visit-mini' + (visited ? ' on' : '') + '" data-action="visit" type="button" aria-pressed="' + visited + '">' +
+          (visited ? '✓ 去过' : '＋ 去过') +
         '</button>' +
-      '</div>';
-
-    return '<article class="card' + (visited ? ' visited' : '') + '" data-idx="' + idx + '">' +
-      (visited ? '<span class="badge-visited">已去过</span>' : '') +
+      '</div>' +
       '<h3 class="card-title">' + escapeHtml(name) + '</h3>' +
       '<span class="card-cat">' + escapeHtml(cafe.category || '其它') + '</span>' +
       '<p class="card-addr">📍 ' + escapeHtml(regionShow) + '</p>' +
       '<p class="card-desc">' + escapeHtml(desc) + '</p>' +
-      actions +
       '</article>';
   }
 
-  /* =========================================================
-     分类快捷选择面板
-     ========================================================= */
-  function updateCatPicker() {
-    var picker = $('catPicker');
-    var list = $('catPickerList');
+  function buildCatMenu() {
+    var menu = $('catMenu');
+    var list = currentVisibleList();
+    var g = groupByCategory(list);
+    var html = '<button data-cat="__all__" class="' + (state.filter === 'all' ? 'current' : '') + '">' +
+                 '<span>🌐 全部分类</span><span class="n">' + list.length + '</span>' +
+               '</button>';
 
-    if (!state.catPickerOpen || renderedList.length === 0) {
-      picker.hidden = true;
-      return;
+    for (var i = 0; i < g.order.length; i++) {
+      var cat = g.order[i];
+      html += '<button data-cat="' + escapeHtml(cat) + '">' +
+                '<span>' + escapeHtml(cat) + '</span><span class="n">' + g.groups[cat].length + '</span>' +
+              '</button>';
     }
-
-    var cats = [];
-    var seen = {};
-    for (var i = 0; i < renderedList.length; i++) {
-      var c = renderedList[i].category || '其它';
-      if (!seen[c]) { seen[c] = 1; cats.push(c); }
-    }
-    cats.sort(compareCategory);
-
-    if (cats.length === 0) {
-      picker.hidden = true;
-      return;
-    }
-
-    var html = '';
-    for (var j = 0; j < cats.length; j++) {
-      html += '<button class="cat-pick-btn" type="button" data-cat="' +
-              escapeHtml(cats[j]) + '">' + escapeHtml(cats[j]) + '</button>';
-    }
-    list.innerHTML = html;
-    picker.hidden = false;
+    menu.innerHTML = html;
   }
 
-  function closeCatPicker() {
-    if (!state.catPickerOpen) return;
-    state.catPickerOpen = false;
-    $('allFilterChip').classList.remove('open');
-    updateCatPicker();
-  }
-
-  function scrollToCategory(name) {
-    var secs = document.querySelectorAll('.category');
-    for (var i = 0; i < secs.length; i++) {
-      if (secs[i].getAttribute('data-cat') === name) {
-        var el = secs[i];
-        var rect = el.getBoundingClientRect();
-        var offset = window.pageYOffset || document.documentElement.scrollTop || 0;
-        var top = rect.top + offset - 10;
-        try {
-          window.scrollTo({ top: top, behavior: 'smooth' });
-        } catch (e) {
-          window.scrollTo(0, top);
-        }
-        el.classList.add('highlight');
-        setTimeout(function () { el.classList.remove('highlight'); }, 1600);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /* =========================================================
-     渲染主列表
-     ========================================================= */
   function render() {
     var content = $('content');
 
-    /* ---- 无数据 ---- */
     if (state.cafes.length === 0) {
       if (state.loading) {
         content.innerHTML = '<div class="state-box"><div class="spinner"></div><p>正在加载咖啡馆资料…</p></div>';
@@ -1240,107 +1178,90 @@
           '<div class="state-box">' +
             '<div class="big-icon">😕</div>' +
             '<p>加载失败：' + escapeHtml(state.error) + '</p>' +
-            '<button class="btn primary" id="retryBtn" type="button">重试</button>' +
+            '<button class="btn primary" id="retryBtn">重试</button>' +
           '</div>';
         var retry = $('retryBtn');
         if (retry) retry.addEventListener('click', function () { fetchData(true); });
       } else {
         content.innerHTML =
-          '<div class="state-box">' +
-            '<div class="big-icon">☕</div>' +
-            '<p>暂时还没有咖啡馆资料，稍后再来看看吧。</p>' +
-          '</div>';
+          '<div class="state-box"><div class="big-icon">☕</div><p>暂时还没有咖啡馆资料。</p></div>';
       }
-      renderedList = [];
       updateSubtitle();
-      updateCatPicker();
+      updateExpandToggle();
+      buildCatMenu();
       return;
     }
 
-    /* ---- 过滤 ---- */
-    var list = [];
-    for (var i = 0; i < state.cafes.length; i++) {
-      if (matches(state.cafes[i])) list.push(state.cafes[i]);
-    }
+    var list = currentVisibleList();
     renderedList = list;
 
-    /* ---- 空结果 ---- */
     if (list.length === 0) {
       var hasFilter = state.query.trim() !== '' || state.filter !== 'all';
       content.innerHTML =
         '<div class="state-box">' +
           '<div class="big-icon">🔍</div>' +
           '<p>' + (hasFilter ? '没有找到符合条件的咖啡馆。' : '暂时还没有咖啡馆资料。') + '</p>' +
-          (hasFilter ? '<button class="btn outline" id="resetBtn" type="button">清除筛选</button>' : '') +
+          (hasFilter ? '<button class="btn outline" id="resetBtn">清除筛选</button>' : '') +
         '</div>';
       var rb = $('resetBtn');
       if (rb) {
         rb.addEventListener('click', function () {
           state.query = '';
           state.filter = 'all';
-          state.catPickerOpen = false;
           $('searchInput').value = '';
           $('clearSearch').hidden = true;
-          $('allFilterChip').classList.remove('open');
-          updateActiveChips();
+          var chips = document.querySelectorAll('#filterRow .chip');
+          for (var k = 0; k < chips.length; k++) {
+            chips[k].classList.toggle('active', chips[k].getAttribute('data-filter') === 'all');
+          }
           render();
         });
       }
       updateSubtitle();
-      updateCatPicker();
+      updateExpandToggle();
+      buildCatMenu();
       return;
     }
 
-    /* ---- 分组 ---- */
-    var groups = {};
-    var order = [];
-    for (var j = 0; j < list.length; j++) {
-      var cat = list[j].category || '其它';
-      if (!groups[cat]) { groups[cat] = []; order.push(cat); }
-      groups[cat].push({ cafe: list[j], idx: j });
-    }
-    order.sort(compareCategory);
-
+    var g = groupByCategory(list);
     var html = '';
-    for (var g = 0; g < order.length; g++) {
-      var catName = order[g];
-      var items = groups[catName];
-      var expanded = state.expanded.has(catName);
+
+    for (var gi = 0; gi < g.order.length; gi++) {
+      var catName = g.order[gi];
+      var items = g.groups[catName];
+
+      var expanded = state.allExpanded || state.expanded.has(catName);
       var visible = expanded ? items : items.slice(0, DEFAULT_VISIBLE);
       var hasMore = items.length > DEFAULT_VISIBLE;
 
-      html += '<section class="category" data-cat="' + escapeHtml(catName) + '">';
+      html += '<section class="category" id="cat-' + encodeURIComponent(catName) + '">';
       html += '<div class="cat-head">';
       html += '<h2>' + escapeHtml(catName) + '<span class="count">' + items.length + '</span></h2>';
       if (hasMore) {
-        html += '<button class="toggle-btn" type="button" data-cat="' + escapeHtml(catName) + '">' +
+        html += '<button class="toggle-btn" data-cat="' + escapeHtml(catName) + '">' +
                 (expanded ? '收起' : '查看全部') + '</button>';
       }
       html += '</div>';
 
-      html += '<div class="cards-row' + (expanded ? ' expanded' : '') + '">';
+      html += '<div class="cards-row' + (expanded ? ' expanded' : '') + '" data-cat="' + escapeHtml(catName) + '">';
       for (var v = 0; v < visible.length; v++) {
-        html += cardHTML(visible[v].cafe, visible[v].idx);
+        var cafe = visible[v];
+        var idx = list.indexOf(cafe);
+        html += cardHTML(cafe, idx);
       }
-      html += '</div>';
-      html += '</section>';
+      html += '</div></section>';
     }
 
     content.innerHTML = html;
     updateSubtitle();
-    updateCatPicker();
+    updateExpandToggle();
+    buildCatMenu();
   }
 
-  /* =========================================================
-     筛选 chip 状态
-     ========================================================= */
-  function updateActiveChips() {
-    var chips = document.querySelectorAll('#filterRow .chip[data-filter]');
-    for (var i = 0; i < chips.length; i++) {
-      chips[i].classList.toggle('active', chips[i].getAttribute('data-filter') === state.filter);
-    }
-    var allChip = $('allFilterChip');
-    if (allChip) allChip.classList.toggle('open', !!state.catPickerOpen);
+  function updateExpandToggle() {
+    var btn = $('expandToggle');
+    if (!btn) return;
+    btn.textContent = state.allExpanded ? '全部收起' : '全部展开';
   }
 
   /* =========================================================
@@ -1359,12 +1280,7 @@
     var sep = CSV_URL.indexOf('?') === -1 ? '?' : '&';
     var url = CSV_URL + sep + '_ts=' + Date.now();
 
-    return fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
-      mode: 'cors',
-      redirect: 'follow'
-    })
+    return fetch(url, { method: 'GET', cache: 'no-store', mode: 'cors', redirect: 'follow' })
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.text();
@@ -1385,7 +1301,6 @@
       .catch(function (err) {
         state.loading = false;
         state.error = (err && err.message) ? err.message : '网络请求失败';
-
         if (state.cafes.length === 0) {
           render();
         } else {
@@ -1393,259 +1308,114 @@
           toast('刷新失败，已显示原有内容');
         }
       })
-      .then(function () {
-        state.refreshing = false;
-      });
+      .then(function () { state.refreshing = false; });
   }
 
   /* =========================================================
-     随机弹窗
+     弹窗（详情 / 随机推荐）
      ========================================================= */
-  function renderRandomModal(cafe) {
+  function renderModal() {
+    var cafe = currentCafe;
+    if (!cafe) return;
+
     var visited = state.visited.has(cafe.id);
     var navUrl = navUrlOf(cafe);
     var xhsUrl = normalizeXhsUrl(cafe.xiaohongshu);
-    var addrFull = addressFullOf(cafe);
+
+    var addrParts = [];
+    if (cafe.region) addrParts.push(cafe.region);
+    if (cafe.address && cafe.address !== cafe.region) addrParts.push(cafe.address);
+    var addrFull = addrParts.length ? addrParts.join(' · ') : '暂无';
 
     var html = '';
-    html += '<div>';
-    html += '<span class="modal-tag-random">🎲 随机推荐</span>';
     html += '<span class="modal-cat">' + escapeHtml(cafe.category || '其它') + '</span>';
-    html += '</div>';
-    html += '<h2 id="randomModalTitle">' + escapeHtml(cafe.name || '未命名咖啡馆') + '</h2>';
-    if (visited) html += '<span class="badge-visited inline">已去过</span>';
+    if (isRandomModal) html += '<span class="modal-dice-tag">🎲 随机推荐</span>';
+    html += '<h2 id="modalTitle">' + escapeHtml(cafe.name || '未命名咖啡馆') + '</h2>';
 
-    html += '<div class="modal-section"><h3>地区 / 地址</h3><p>' +
-            escapeHtml(addrFull) + '</p></div>';
-
+    html += '<div class="modal-section"><h3>地区 / 地址</h3><p>' + escapeHtml(addrFull) + '</p></div>';
     html += '<div class="modal-section"><h3>描述</h3><p>' +
             (cafe.description ? escapeHtml(cafe.description) : '暂无') + '</p></div>';
 
     html += '<div class="modal-actions">';
+    html += '<button class="btn ' + (visited ? 'ghost' : 'primary') + '" id="visitBtn">' +
+            (visited ? '取消已去过' : '标记为已去过') + '</button>';
     if (navUrl) {
-      html += '<a class="btn primary" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>';
+      html += '<a class="btn outline" href="' + escapeHtml(navUrl) + '" target="_blank" rel="noopener noreferrer">🧭 导航</a>';
     } else {
-      html += '<button class="btn primary" type="button" disabled>🧭 暂无导航资料</button>';
+      html += '<button class="btn outline" disabled>🧭 暂无导航</button>';
     }
     if (xhsUrl) {
       html += '<a class="btn outline" href="' + escapeHtml(xhsUrl) + '" target="_blank" rel="noopener noreferrer">📕 小红书</a>';
     } else {
-      html += '<button class="btn outline" type="button" disabled>📕 暂无小红书</button>';
+      html += '<button class="btn outline" disabled>📕 暂无链接</button>';
     }
-    html += '<button class="btn ' + (visited ? 'ghost' : 'outline') + '" id="randomVisitBtn" type="button">' +
-            (visited ? '✓ 取消已去过' : '✓ 标记已去过') + '</button>';
-    html += '<button class="btn random-again" id="randomAgainBtn" type="button">🎲 换一个</button>';
     html += '</div>';
 
-    $('randomModalBody').innerHTML = html;
+    var body = $('modalBody');
+    body.innerHTML = html;
 
-    var visitBtn = $('randomVisitBtn');
+    var visitBtn = $('visitBtn');
     if (visitBtn) {
       visitBtn.addEventListener('click', function () {
-        var nowVisited;
         if (state.visited.has(cafe.id)) {
           state.visited.delete(cafe.id);
-          nowVisited = false;
           toast('已取消标记');
         } else {
           state.visited.add(cafe.id);
-          nowVisited = true;
           toast('已标记为去过 ☕');
         }
         saveVisited();
-        renderRandomModal(cafe);
+        renderModal();
         render();
-      });
-    }
-
-    var againBtn = $('randomAgainBtn');
-    if (againBtn) {
-      againBtn.addEventListener('click', function () {
-        openRandomModal();
       });
     }
   }
 
-  function openRandomModal() {
-    if (renderedList.length === 0) {
-      toast('没有符合条件的咖啡馆');
-      return;
-    }
-
-    var pick;
-    if (renderedList.length === 1) {
-      pick = renderedList[0];
-    } else {
-      var lastId = currentRandomCafe ? currentRandomCafe.id : null;
-      var tries = 0;
-      do {
-        pick = renderedList[Math.floor(Math.random() * renderedList.length)];
-        tries++;
-      } while (lastId && pick.id === lastId && tries < 12);
-    }
-
-    currentRandomCafe = pick;
-    renderRandomModal(pick);
-
-    var overlay = $('randomOverlay');
-    if (!overlay.classList.contains('open')) {
-      overlay.classList.add('open');
-      document.body.classList.add('modal-open');
-    }
+  function openModal(cafe, random) {
+    currentCafe = cafe;
+    isRandomModal = !!random;
+    renderModal();
+    var overlay = $('modalOverlay');
+    overlay.classList.add('open');
+    document.body.classList.add('modal-open');
     var modal = overlay.querySelector('.modal');
     if (modal) modal.scrollTop = 0;
   }
 
-  function closeRandomModal() {
-    var overlay = $('randomOverlay');
+  function closeModal() {
+    var overlay = $('modalOverlay');
     overlay.classList.remove('open');
     document.body.classList.remove('modal-open');
-    currentRandomCafe = null;
+    currentCafe = null;
+    isRandomModal = false;
   }
 
   /* =========================================================
-     卡片区域点击（委托）
+     随机推荐
      ========================================================= */
-  $('content').addEventListener('click', function (e) {
-    var target = e.target;
-
-    if (suppressClick) {
-      var anyBtn = target.closest ? target.closest('a, button') : null;
-      if (anyBtn) { e.preventDefault(); return; }
-    }
-
-    var visitedBtn = target.closest ? target.closest('[data-action="visited"]') : null;
-    if (visitedBtn) {
-      var idx = parseInt(visitedBtn.getAttribute('data-idx'), 10);
-      var cafe = renderedList[idx];
-      if (!cafe) return;
-      if (state.visited.has(cafe.id)) {
-        state.visited.delete(cafe.id);
-        toast('已取消标记');
-      } else {
-        state.visited.add(cafe.id);
-        toast('已标记为去过 ☕');
-      }
-      saveVisited();
-      render();
+  function pickRandom() {
+    var list = currentVisibleList();
+    if (list.length === 0) {
+      toast('当前筛选下没有咖啡馆');
       return;
     }
-
-    var toggle = target.closest ? target.closest('.toggle-btn') : null;
-    if (toggle) {
-      var cat = toggle.getAttribute('data-cat');
-      if (state.expanded.has(cat)) state.expanded.delete(cat);
-      else state.expanded.add(cat);
-      render();
-      return;
-    }
-  });
+    var cafe = list[Math.floor(Math.random() * list.length)];
+    openModal(cafe, true);
+  }
 
   /* =========================================================
-     分类选择面板交互
+     分类菜单交互
      ========================================================= */
-  $('catPickerList').addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('.cat-pick-btn') : null;
-    if (!btn) return;
-    var cat = btn.getAttribute('data-cat');
-    closeCatPicker();
-    setTimeout(function () { scrollToCategory(cat); }, 60);
-  });
+  function openCatMenu() {
+    buildCatMenu();
+    $('catMenu').classList.add('open');
+  }
+  function closeCatMenu() {
+    $('catMenu').classList.remove('open');
+  }
 
   /* =========================================================
-     筛选行交互
-     ========================================================= */
-  $('filterRow').addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('.chip') : null;
-    if (!btn) return;
-
-    // 随机
-    if (btn.id === 'randomBtn') {
-      openRandomModal();
-      return;
-    }
-
-    // 全部收起
-    if (btn.id === 'collapseAllBtn') {
-      state.expanded.clear();
-      render();
-      toast('已收起全部分类');
-      return;
-    }
-
-    // 全部（打开分类选择）
-    if (btn.id === 'allFilterChip') {
-      var willOpen = !(state.filter === 'all' && state.catPickerOpen);
-      state.filter = 'all';
-      state.catPickerOpen = willOpen;
-      updateActiveChips();
-      render();
-      return;
-    }
-
-    // 未去过 / 已去过
-    state.filter = btn.getAttribute('data-filter') || 'all';
-    state.catPickerOpen = false;
-    updateActiveChips();
-    render();
-  });
-
-  // 点击外部关闭分类选择
-  document.addEventListener('click', function (e) {
-    if (!state.catPickerOpen) return;
-    var t = e.target;
-    if (t.closest && (t.closest('#catPicker') || t.closest('#allFilterChip'))) return;
-    closeCatPicker();
-  });
-
-  /* =========================================================
-     搜索
-     ========================================================= */
-  var searchInput = $('searchInput');
-  var clearSearch = $('clearSearch');
-  var searchTimer = null;
-
-  searchInput.addEventListener('input', function () {
-    clearSearch.hidden = searchInput.value.length === 0;
-    if (searchTimer) clearTimeout(searchTimer);
-    searchTimer = setTimeout(function () {
-      state.query = searchInput.value;
-      render();
-    }, 160);
-  });
-
-  clearSearch.addEventListener('click', function () {
-    searchInput.value = '';
-    clearSearch.hidden = true;
-    state.query = '';
-    render();
-    searchInput.focus();
-  });
-
-  /* =========================================================
-     刷新按钮
-     ========================================================= */
-  $('refreshBtn').addEventListener('click', function () {
-    var btn = this;
-    btn.classList.add('spinning');
-    fetchData(true).then(function () {
-      setTimeout(function () { btn.classList.remove('spinning'); }, 400);
-    });
-  });
-
-  /* =========================================================
-     弹窗关闭
-     ========================================================= */
-  $('randomModalClose').addEventListener('click', closeRandomModal);
-  $('randomOverlay').addEventListener('click', function (e) {
-    if (e.target === $('randomOverlay')) closeRandomModal();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && $('randomOverlay').classList.contains('open')) closeRandomModal();
-  });
-
-  /* =========================================================
-     横向滚动：滚轮 & 鼠标拖拽
+     横向滚动：滚轮 & 拖拽
      ========================================================= */
   function closestRow(el) {
     if (!el || !el.closest) return null;
@@ -1668,12 +1438,7 @@
     var row = closestRow(e.target);
     if (!row || row.classList.contains('expanded')) return;
     if (row.scrollWidth <= row.clientWidth + 1) return;
-    dragState = {
-      row: row,
-      startX: e.clientX,
-      startScroll: row.scrollLeft,
-      moved: false
-    };
+    dragState = { row: row, startX: e.clientX, startScroll: row.scrollLeft, moved: false };
   });
 
   document.addEventListener('mousemove', function (e) {
@@ -1694,13 +1459,226 @@
     if (dragState.moved) {
       dragState.row.classList.remove('dragging');
       suppressClick = true;
-      setTimeout(function () { suppressClick = false; }, 100);
+      setTimeout(function () { suppressClick = false; }, 80);
     }
     dragState = null;
   }
 
   document.addEventListener('mouseup', endDrag);
   document.addEventListener('mouseleave', endDrag);
+
+  /* =========================================================
+     内容点击事件（委托）
+     ========================================================= */
+  $('content').addEventListener('click', function (e) {
+    var target = e.target;
+
+    // 卡片上的操作按钮
+    var actionBtn = target.closest ? target.closest('[data-action]') : null;
+    if (actionBtn) {
+      var action = actionBtn.getAttribute('data-action');
+
+      if (action === 'visit') {
+        var card = actionBtn.closest('.card');
+        if (card) {
+          var idx = parseInt(card.getAttribute('data-idx'), 10);
+          var cafe = renderedList[idx];
+          if (cafe) {
+            if (state.visited.has(cafe.id)) {
+              state.visited.delete(cafe.id);
+              toast('已取消标记');
+            } else {
+              state.visited.add(cafe.id);
+              toast('已标记为去过 ☕');
+            }
+            saveVisited();
+            render();
+          }
+        }
+        e.stopPropagation();
+        return;
+      }
+
+      // 链接不阻止默认行为
+      if (action === 'nav' || action === 'xhs') {
+        if (suppressClick) e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+    }
+
+    // 展开 / 收起分类
+    var toggle = target.closest ? target.closest('.toggle-btn') : null;
+    if (toggle) {
+      var cat = toggle.getAttribute('data-cat');
+      if (state.allExpanded) {
+        // 全局展开状态下点击某分类的“收起” => 退出全局展开，只收起该分类
+        state.allExpanded = false;
+        state.expanded = new Set();
+        var list = currentVisibleList();
+        var g = groupByCategory(list);
+        for (var gi = 0; gi < g.order.length; gi++) {
+          if (g.order[gi] !== cat) state.expanded.add(g.order[gi]);
+        }
+      } else if (state.expanded.has(cat)) {
+        state.expanded.delete(cat);
+      } else {
+        state.expanded.add(cat);
+      }
+      render();
+      return;
+    }
+
+    // 点击卡片本身 => 打开详情
+    if (suppressClick) return;
+    var cardEl = target.closest ? target.closest('.card') : null;
+    if (cardEl) {
+      var idx2 = parseInt(cardEl.getAttribute('data-idx'), 10);
+      var cafe2 = renderedList[idx2];
+      if (cafe2) openModal(cafe2, false);
+    }
+  });
+
+  /* =========================================================
+     搜索 / 筛选
+     ========================================================= */
+  var searchInput = $('searchInput');
+  var clearSearch = $('clearSearch');
+  var searchTimer = null;
+
+  searchInput.addEventListener('input', function () {
+    clearSearch.hidden = searchInput.value.length === 0;
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.query = searchInput.value;
+      render();
+    }, 160);
+  });
+
+  clearSearch.addEventListener('click', function () {
+    searchInput.value = '';
+    clearSearch.hidden = true;
+    state.query = '';
+    render();
+    searchInput.focus();
+  });
+
+  // 筛选行 & 分类菜单
+  $('filterRow').addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('.chip') : null;
+    if (!btn) return;
+
+    var filter = btn.getAttribute('data-filter') || 'all';
+
+    // “全部”按钮 => 打开分类菜单
+    if (filter === 'all') {
+      if ($('catMenu').classList.contains('open')) {
+        closeCatMenu();
+      } else {
+        openCatMenu();
+      }
+      return;
+    }
+
+    closeCatMenu();
+    state.filter = filter;
+    var chips = document.querySelectorAll('#filterRow .chip');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle('active', chips[i] === btn);
+    }
+    render();
+  });
+
+  // 点击页面其它地方关闭分类菜单
+  document.addEventListener('click', function (e) {
+    var menu = $('catMenu');
+    if (!menu.classList.contains('open')) return;
+    if (menu.contains(e.target)) return;
+    if (e.target.closest && e.target.closest('#filterRow')) return;
+    closeCatMenu();
+  });
+
+  // 分类菜单选择
+  $('catMenu').addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('button[data-cat]') : null;
+    if (!btn) return;
+
+    var cat = btn.getAttribute('data-cat');
+    closeCatMenu();
+
+    // 把“全部”chip设为激活
+    var chips = document.querySelectorAll('#filterRow .chip');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle('active', chips[i].getAttribute('data-filter') === 'all');
+    }
+
+    if (cat === '__all__') {
+      state.filter = 'all';
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 只显示该分类
+    state.filter = 'all';
+    state.query = '';
+    searchInput.value = '';
+    clearSearch.hidden = true;
+    state.allExpanded = true;
+    state.expanded = new Set();
+
+    // 用 query 精准限定？不，改用临时标记：直接渲染后跳转
+    // 最简单方案：渲染全部并展开，滚动到该分类
+    render();
+
+    setTimeout(function () {
+      var el = document.getElementById('cat-' + encodeURIComponent(cat));
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  });
+
+  /* =========================================================
+     全部展开 / 收起
+     ========================================================= */
+  $('expandToggle').addEventListener('click', function () {
+    state.allExpanded = !state.allExpanded;
+    state.expanded = new Set();
+    render();
+
+    // 展开时，如果当前不在顶部则滚回顶部
+    if (state.allExpanded) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  /* =========================================================
+     随机按钮
+     ========================================================= */
+  $('randomBtn').addEventListener('click', pickRandom);
+
+  /* =========================================================
+     弹窗关闭
+     ========================================================= */
+  $('modalClose').addEventListener('click', closeModal);
+  $('modalOverlay').addEventListener('click', function (e) {
+    if (e.target === $('modalOverlay')) closeModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('modalOverlay').classList.contains('open')) closeModal();
+  });
+
+  /* =========================================================
+     刷新按钮
+     ========================================================= */
+  $('refreshBtn').addEventListener('click', function () {
+    var btn = this;
+    btn.classList.add('spinning');
+    fetchData(true).then(function () {
+      setTimeout(function () { btn.classList.remove('spinning'); }, 400);
+    });
+  });
 
   /* =========================================================
      一键到顶部
@@ -1711,15 +1689,17 @@
   function updateBackToTop() {
     backToTopTicking = false;
     var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    if (y > BACK_TO_TOP_SCROLL) backToTop.classList.add('visible');
-    else backToTop.classList.remove('visible');
+    backToTop.classList.toggle('visible', y > BACK_TO_TOP_SCROLL);
   }
 
   window.addEventListener('scroll', function () {
     if (backToTopTicking) return;
     backToTopTicking = true;
-    if (window.requestAnimationFrame) window.requestAnimationFrame(updateBackToTop);
-    else setTimeout(updateBackToTop, 60);
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(updateBackToTop);
+    } else {
+      setTimeout(updateBackToTop, 60);
+    }
   }, { passive: true });
 
   backToTop.addEventListener('click', function () {
@@ -1765,26 +1745,21 @@
     if (state.refreshing) { pullStartY = null; return; }
     if (e.touches.length !== 1) { pullStartY = null; return; }
     if (window.scrollY > 0) { pullStartY = null; return; }
-    if ($('randomOverlay').classList.contains('open')) { pullStartY = null; return; }
+    if ($('modalOverlay').classList.contains('open')) { pullStartY = null; return; }
     pullStartY = e.touches[0].clientY;
     pullDist = 0;
   }, { passive: true });
 
   document.addEventListener('touchmove', function (e) {
     if (pullStartY === null || e.touches.length !== 1) return;
-
     var dy = e.touches[0].clientY - pullStartY;
 
     if (dy <= 0) {
       if (pullDist !== 0) { pullDist = 0; updatePull(0); }
       return;
     }
-
     if (window.scrollY > 0) {
-      pullStartY = null;
-      pullDist = 0;
-      updatePull(0);
-      return;
+      pullStartY = null; pullDist = 0; updatePull(0); return;
     }
 
     pullDist = Math.min(dy * 0.5, 130);
@@ -1798,14 +1773,11 @@
   function endPull() {
     if (pullStartY === null) return;
     var shouldRefresh = pullDist >= PULL_THRESHOLD;
-    pullStartY = null;
-    pullDist = 0;
+    pullStartY = null; pullDist = 0;
 
     if (shouldRefresh) {
       showRefreshingIndicator();
-      fetchData(true).then(function () {
-        setTimeout(hidePullIndicator, 320);
-      });
+      fetchData(true).then(function () { setTimeout(hidePullIndicator, 320); });
     } else {
       updatePull(0);
     }
@@ -1813,9 +1785,7 @@
 
   document.addEventListener('touchend', endPull, { passive: true });
   document.addEventListener('touchcancel', function () {
-    pullStartY = null;
-    pullDist = 0;
-    updatePull(0);
+    pullStartY = null; pullDist = 0; updatePull(0);
   }, { passive: true });
 
   /* =========================================================
@@ -1831,9 +1801,7 @@
                 '<rect x="120" y="150" width="240" height="26" rx="13" fill="#FBF6F0"/>' +
                 '</svg>';
 
-      var iconUrl = 'data:image/svg+xml;base64,' +
-        btoa(unescape(encodeURIComponent(svg)));
-
+      var iconUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
       var base = location.origin + location.pathname;
       var dir = base.replace(/[^\/]*$/, '');
 
@@ -1881,10 +1849,27 @@
   function init() {
     injectManifest();
     state.visited = loadVisited();
-    updateActiveChips();
     updatePull(0);
     render();
     fetchData(false);
+
+    // 点击卡片空白区域不触发弹窗，已经通过委托中的 closest('.card') 控制
+    // 键盘 Enter 打开卡片
+    $('content').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      var card = e.target.closest ? e.target.closest('.card') : null;
+      if (!card) return;
+      e.preventDefault();
+      var idx = parseInt(card.getAttribute('data-idx'), 10);
+      var cafe = renderedList[idx];
+      if (cafe) openModal(cafe, false);
+    });
+
+    // 卡片获得键盘焦点（可访问性）
+    $('content').addEventListener('focusin', function (e) {
+      var card = e.target.closest ? e.target.closest('.card') : null;
+      if (card) card.setAttribute('tabindex', '0');
+    });
   }
 
   if (document.readyState === 'loading') {
