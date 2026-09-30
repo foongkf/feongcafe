@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <!-- 移除了 maximum-scale / user-scalable 限制，允许用户缩放 -->
+  <!-- 允许用户缩放，不做 maximum-scale 限制 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -105,6 +105,25 @@
     :focus-visible {
       outline: 2.5px solid var(--primary);
       outline-offset: 2px;
+    }
+
+    /* ===== 跳转到主内容（无障碍） ===== */
+    .skip-link {
+      position: absolute;
+      top: 0;
+      left: -9999px;
+      z-index: 999;
+      padding: 10px 18px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 0 0 12px 0;
+    }
+
+    .skip-link:focus {
+      left: 0;
     }
 
     /* ===== 顶部固定栏 ===== */
@@ -213,7 +232,7 @@
 
     .search-wrapper input {
       width: 100%;
-      padding: 12px 16px 12px 42px;
+      padding: 12px 44px 12px 42px;
       border: 1.5px solid var(--border-soft);
       border-radius: var(--radius-btn);
       font-size: 1rem;
@@ -242,6 +261,34 @@
       font-size: 1.1rem;
       color: var(--text-secondary);
       pointer-events: none;
+    }
+
+    /* 搜索清空按钮 */
+    .search-wrapper .search-clear {
+      position: absolute;
+      right: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .search-wrapper .search-clear:active {
+      background: var(--accent-soft);
+      color: var(--primary);
     }
 
     /* ===== 分类筛选 ===== */
@@ -414,6 +461,10 @@
     /* ===== 主内容区域 ===== */
     .main-content {
       padding: 0 16px;
+    }
+
+    .main-content:focus {
+      outline: none;
     }
 
     .category-group {
@@ -838,13 +889,14 @@
 </head>
 <body>
 
+  <a class="skip-link" href="#mainContent">跳转到主要内容</a>
+
   <!-- ===== 顶部固定区域 ===== -->
   <header class="sticky-header" id="stickyHeader">
     <div class="header-top">
       <h1 class="app-title"><span aria-hidden="true">☕</span> FEONG的咖啡馆收藏集</h1>
       <div class="header-actions">
-        <!-- 新增：刷新按钮（与随机、只看收藏并列） -->
-        <button class="icon-btn" id="refreshBtn" type="button" aria-label="刷新数据" title="刷新数据">
+        <button class="icon-btn" id="refreshBtn" type="button" aria-label="刷新数据" title="刷新数据" aria-busy="false">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01"></path>
             <path d="M20.5 4.5v5h-5"></path>
@@ -859,16 +911,16 @@
       <span class="search-icon" aria-hidden="true">🔍</span>
       <input type="text" id="searchInput" placeholder="搜索名字、地点、分类、描述…"
              autocomplete="off" enterkeyhint="search" aria-label="搜索咖啡馆">
+      <button class="search-clear" id="searchClearBtn" type="button" aria-label="清空搜索内容" title="清空搜索" hidden>✕</button>
     </div>
 
     <div class="filter-row">
       <button class="filter-btn" id="categoryBtn" type="button"
-              aria-haspopup="true" aria-expanded="false" aria-label="选择分类">
+              aria-haspopup="true" aria-expanded="false" aria-controls="categoryDropdown" aria-label="选择分类">
         <span aria-hidden="true">🏷️</span>
         <span class="label" id="categoryBtnLabel">分类</span>
         <span class="arrow" aria-hidden="true">▾</span>
       </button>
-      <!-- 新增：清空筛选 -->
       <button class="clear-btn" id="clearFiltersBtn" type="button" hidden>✕ 清空筛选</button>
       <div class="filter-dropdown" id="categoryDropdown" role="menu" aria-label="分类列表"></div>
     </div>
@@ -879,7 +931,7 @@
     <span id="activeFilterLabel"></span>
   </div>
 
-  <main class="main-content" id="mainContent">
+  <main class="main-content" id="mainContent" tabindex="-1">
     <div class="loading-state">
       <div class="loader"></div>
       <p>正在读取咖啡馆数据…</p>
@@ -899,9 +951,9 @@
     (function () {
       'use strict';
 
-      /* =========================================================
-       * 1. 配置 & 状态（集中管理）
-       * =======================================================*/
+      /* =====================================================================
+       * 1. 配置（所有可调参数集中在此）
+       * ===================================================================*/
       const CONFIG = {
         // Google Sheets 发布的 CSV 地址（如需更换数据源，只改这里）
         CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSMGavuFvvhx3l5G3oN_X_8QZsdfs6wg69dWw0WnkOIF6a6fJCXqgmgSYCLAkh94jI5sPQF-IZ5g_r6/pub?output=csv',
@@ -909,27 +961,38 @@
         CACHE_KEY: 'feong_cafe_csv_v2',       // CSV 文本缓存键
         TIMEOUT: 9000,                        // 单次请求超时（毫秒）
         RETRY: 1,                             // 失败自动重试次数
-        RETRY_DELAY: 600,                     // 重试间隔
+        RETRY_DELAY: 600,                     // 重试间隔（毫秒）
         SEARCH_DEBOUNCE: 250,                 // 搜索防抖（毫秒）
-        BACK_TOP_THRESHOLD: 300               // 返回顶部按钮出现阈值
+        BACK_TOP_THRESHOLD: 300,              // 返回顶部按钮出现阈值（px）
+        TOAST_DURATION: 2200,                 // Toast 显示时长
+        HIGHLIGHT_DURATION: 1600,             // 随机高亮持续时长
+        REMOVE_ANIM_DURATION: 180,            // 卡片淡出移除时长
+        ALL_CATEGORY: '__ALL__',              // 「全部」分类的哨兵值
+        DEFAULT_CATEGORY: '未分类',            // 缺少分类时的兜底值
+        FALLBACK_NAME: '未命名咖啡馆'           // 缺少店名时的兜底值
       };
 
+      /* =====================================================================
+       * 2. 全局状态
+       * ===================================================================*/
       const state = {
-        allCafes: [],           // 全部咖啡馆
-        categories: [],         // 全部分类
-        currentCategory: '__ALL__',
+        allCafes: [],               // 全部咖啡馆（规范化后）
+        categories: [],             // 全部分类（已排序）
+        currentCategory: CONFIG.ALL_CATEGORY,
         searchQuery: '',
         showFavoritesOnly: false,
-        favorites: new Set(),   // 收藏 ID 集合
-        isRefreshing: false,    // 是否正在刷新
-        status: 'idle'          // idle | loading | ready | error
+        favorites: new Set(),       // 收藏 ID 集合
+        isRefreshing: false,        // 是否正在刷新
+        status: 'idle',             // idle | loading | ready | error
+        dataSig: ''                 // 当前数据的指纹，用于判断内容是否变化
       };
 
-      /* =========================================================
-       * 2. DOM 引用
-       * =======================================================*/
+      /* =====================================================================
+       * 3. DOM 引用
+       * ===================================================================*/
       const mainContent = document.getElementById('mainContent');
       const searchInput = document.getElementById('searchInput');
+      const searchClearBtn = document.getElementById('searchClearBtn');
       const resultCount = document.getElementById('resultCount');
       const activeFilterLabel = document.getElementById('activeFilterLabel');
       const randomBtn = document.getElementById('randomBtn');
@@ -943,22 +1006,37 @@
       const categoryDropdown = document.getElementById('categoryDropdown');
       const backTopBtn = document.getElementById('backTopBtn');
 
-      /* =========================================================
-       * 3. 通用工具
-       * =======================================================*/
+      /** 用户是否偏好「减少动效」 */
+      const prefersReducedMotion = !!(window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-      /** Toast 提示 */
+      /** 最近一次渲染的缓存键，用于跳过无意义的重绘 */
+      let lastRenderKey = null;
+
+      /* =====================================================================
+       * 4. 通用工具
+       * ===================================================================*/
+
       let toastTimer = null;
+
+      /**
+       * 显示一条 Toast 提示
+       * @param {string} msg
+       */
       function showToast(msg) {
         toastEl.textContent = msg;
         toastEl.classList.add('show');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(function () {
           toastEl.classList.remove('show');
-        }, 2200);
+        }, CONFIG.TOAST_DURATION);
       }
 
-      /** HTML 转义：所有用户数据输出到 HTML 前必须经过此函数 */
+      /**
+       * HTML 转义：所有来自 CSV 的数据输出到 HTML 前必须经过此函数
+       * @param {*} str
+       * @returns {string}
+       */
       function escapeHtml(str) {
         if (str == null) return '';
         return String(str)
@@ -970,8 +1048,9 @@
       }
 
       /**
-       * URL 安全校验：只允许 http / https 绝对地址。
-       * 过滤 javascript:、data:、vbscript: 等危险协议。
+       * URL 安全校验：只允许 http / https 绝对地址
+       * @param {*} url
+       * @returns {string} 合法则返回规范化后的 URL，否则返回空串
        */
       function sanitizeUrl(url) {
         if (url == null) return '';
@@ -987,7 +1066,11 @@
         }
       }
 
-      /** CSS.escape 兼容处理（旧浏览器无原生实现时使用简易转义） */
+      /**
+       * CSS.escape 兼容处理
+       * @param {string} value
+       * @returns {string}
+       */
       function cssEscape(value) {
         if (window.CSS && typeof window.CSS.escape === 'function') {
           return window.CSS.escape(String(value));
@@ -995,7 +1078,12 @@
         return String(value).replace(/([^\w-])/g, '\\$1');
       }
 
-      /** closest 兼容封装 */
+      /**
+       * closest 兼容封装
+       * @param {Element} el
+       * @param {string} selector
+       * @returns {Element|null}
+       */
       function closestFrom(el, selector) {
         if (!el || el.nodeType !== 1) return null;
         if (el.closest) return el.closest(selector);
@@ -1007,12 +1095,20 @@
         return null;
       }
 
-      /** 简单延时 */
+      /**
+       * 简单延时
+       * @param {number} ms
+       * @returns {Promise<void>}
+       */
       function delay(ms) {
         return new Promise(function (resolve) { setTimeout(resolve, ms); });
       }
 
-      /** FNV-1a 32 位哈希，用于生成稳定 ID */
+      /**
+       * FNV-1a 32 位哈希，用于生成稳定 ID / 数据指纹
+       * @param {string} str
+       * @returns {string} base36 字符串
+       */
       function fnv1a(str) {
         let h = 2166136261;
         for (let i = 0; i < str.length; i++) {
@@ -1022,30 +1118,52 @@
         return (h >>> 0).toString(36);
       }
 
-      /* =========================================================
-       * 4. 收藏存取
-       * =======================================================*/
+      /**
+       * 判断当前是否有任何筛选条件生效
+       * @returns {boolean}
+       */
+      function hasActiveFilters() {
+        return state.showFavoritesOnly ||
+               state.currentCategory !== CONFIG.ALL_CATEGORY ||
+               state.searchQuery.trim() !== '';
+      }
+
+      /* =====================================================================
+       * 5. 收藏存取（localStorage）
+       * ===================================================================*/
+
+      /**
+       * 读取收藏集合
+       * @returns {Set<string>}
+       */
       function loadFavorites() {
         try {
           const raw = localStorage.getItem(CONFIG.FAV_KEY);
           if (!raw) return new Set();
           const arr = JSON.parse(raw);
-          if (Array.isArray(arr)) return new Set(arr.filter(function (x) { return typeof x === 'string'; }));
-        } catch (e) { /* 忽略解析错误 */ }
+          if (Array.isArray(arr)) {
+            return new Set(arr.filter(function (x) { return typeof x === 'string'; }));
+          }
+        } catch (e) { /* 解析失败时静默忽略 */ }
         return new Set();
       }
 
+      /** 写入收藏集合（失败不抛出） */
       function saveFavorites() {
         try {
           localStorage.setItem(CONFIG.FAV_KEY, JSON.stringify(Array.from(state.favorites)));
         } catch (e) { /* localStorage 可能已满，忽略 */ }
       }
 
-      /* =========================================================
-       * 5. CSV 解析
-       * =======================================================*/
+      /* =====================================================================
+       * 6. CSV 解析 / 列识别 / 数据规范化
+       * ===================================================================*/
 
-      /** 标准 CSV 解析（支持引号、转义引号、换行） */
+      /**
+       * 标准 CSV 解析（支持引号、转义引号、引号内换行、CRLF、BOM）
+       * @param {string} text
+       * @returns {string[][]} 行 × 列
+       */
       function parseCSV(text) {
         const rows = [];
         let currentRow = [];
@@ -1096,7 +1214,7 @@
 
       /**
        * 字段候选名（兼容中英文表头）。
-       * 注意：region 的候选里【不能】再出现「地址」，
+       * 注意：region 的候选里【不能】出现「地址」，
        * 否则会和 address 抢同一列，导致地点与详细地址重复。
        */
       const FIELD_CANDIDATES = {
@@ -1110,58 +1228,80 @@
 
       /**
        * 解析表头 → 列索引映射。
-       * 策略：先全局精确匹配（避免「咖啡馆地址」被 name 抢走），
-       *       再全局模糊包含匹配，且每列只能被一个字段占用。
+       *
+       * 三轮策略：
+       *  1) 全局精确匹配：候选词按长度降序，长候选优先（「详细地址」不会被「地址」抢）。
+       *  2) 全局模糊（包含）匹配：以「匹配结束位置 × 100 + 候选词长度」打分，
+       *     结束位置靠后、候选词更长的优先，避免「咖啡馆」抢走「咖啡馆地址」这一列。
+       *  3) id 列单独精确匹配（避免 "video" 这类词包含 "id" 被误伤）。
+       *
+       * 每一列只能被一个字段占用。
+       *
+       * @param {string[]} headers
+       * @returns {Object<string, number>} 字段名 → 列索引（未匹配为 -1）
        */
       function resolveColumns(headers) {
         const norm = headers.map(function (h) {
           return String(h == null ? '' : h).trim().toLowerCase().replace(/\s+/g, '');
         });
-        const used = new Set();
+
+        const usedCol = new Set();
         const res = {};
         const keys = Object.keys(FIELD_CANDIDATES);
+        keys.forEach(function (k) { res[k] = -1; });
 
-        // 第一轮：精确匹配
+        // ---------- 第 1 轮：精确匹配（长候选词优先） ----------
+        const exactPairs = [];
         keys.forEach(function (key) {
-          const cands = FIELD_CANDIDATES[key];
-          for (let c = 0; c < cands.length; c++) {
-            let found = -1;
-            for (let i = 0; i < norm.length; i++) {
-              if (!used.has(i) && norm[i] === cands[c]) { found = i; break; }
-            }
-            if (found !== -1) {
-              res[key] = found;
-              used.add(found);
+          FIELD_CANDIDATES[key].forEach(function (cand) {
+            const c = String(cand).trim().toLowerCase();
+            if (c) exactPairs.push({ key: key, cand: c });
+          });
+        });
+        exactPairs.sort(function (a, b) { return b.cand.length - a.cand.length; });
+
+        exactPairs.forEach(function (p) {
+          if (res[p.key] !== -1) return;
+          for (let i = 0; i < norm.length; i++) {
+            if (!usedCol.has(i) && norm[i] === p.cand) {
+              res[p.key] = i;
+              usedCol.add(i);
               return;
             }
           }
         });
 
-        // 第二轮：模糊包含匹配（跳过已被占用的列）
+        // ---------- 第 2 轮：包含匹配（结束位置 + 长度打分） ----------
+        const fuzzy = [];
         keys.forEach(function (key) {
-          if (res[key] !== undefined) return;
-          const cands = FIELD_CANDIDATES[key];
-          for (let c = 0; c < cands.length; c++) {
-            let found = -1;
+          if (res[key] !== -1) return;
+          FIELD_CANDIDATES[key].forEach(function (cand) {
+            const c = String(cand).trim().toLowerCase();
+            if (!c) return;
             for (let i = 0; i < norm.length; i++) {
-              if (!used.has(i) && norm[i].indexOf(cands[c]) !== -1) { found = i; break; }
+              if (usedCol.has(i)) continue;
+              const pos = norm[i].indexOf(c);
+              if (pos === -1) continue;
+              fuzzy.push({
+                key: key,
+                col: i,
+                score: (pos + c.length) * 100 + c.length
+              });
             }
-            if (found !== -1) {
-              res[key] = found;
-              used.add(found);
-              return;
-            }
-          }
+          });
+        });
+        fuzzy.sort(function (a, b) { return b.score - a.score; });
+
+        fuzzy.forEach(function (item) {
+          if (res[item.key] !== -1 || usedCol.has(item.col)) return;
+          res[item.key] = item.col;
+          usedCol.add(item.col);
         });
 
-        keys.forEach(function (key) {
-          if (res[key] === undefined) res[key] = -1;
-        });
-
-        // id 列单独处理：只做精确匹配，避免误伤（例如 "video" 包含 "id"）
+        // ---------- 第 3 轮：id 列精确匹配 ----------
         let idIdx = -1;
         for (let i = 0; i < norm.length; i++) {
-          if (used.has(i)) continue;
+          if (usedCol.has(i)) continue;
           if (norm[i] === 'id' || norm[i] === '编号' || norm[i] === '标识') { idIdx = i; break; }
         }
         res.id = idIdx;
@@ -1169,18 +1309,27 @@
         return res;
       }
 
-      /** 基于内容生成稳定 ID（不依赖行号） */
+      /**
+       * 基于内容生成稳定 ID。
+       * 只使用「店名 + 地点」这两个最不容易变的字段，
+       * 避免描述 / 地址微调导致收藏丢失。
+       * @param {{name:string, region:string}} cafe
+       * @returns {string}
+       */
       function makeStableId(cafe) {
         const seed = [
-          cafe.name || '',
-          cafe.address || '',
-          cafe.url || '',
-          cafe.region || ''
-        ].map(function (v) { return String(v).trim().toLowerCase(); }).join('\u0001');
+          String(cafe.name || '').trim().toLowerCase(),
+          String(cafe.region || '').trim().toLowerCase()
+        ].join('\u0001');
         return 'c_' + fnv1a(seed);
       }
 
-      /** 一行数据 → 咖啡馆对象；无效行返回 null */
+      /**
+       * 一行数据 → 咖啡馆对象；无效行返回 null
+       * @param {string[]} row
+       * @param {Object<string, number>} cols
+       * @returns {Object|null}
+       */
       function normalizeCafe(row, cols) {
         function get(key) {
           const i = cols[key];
@@ -1193,7 +1342,7 @@
         const region = get('region');
         const address = get('address');
         const url = get('url');
-        const category = get('category') || '未分类';
+        const category = get('category') || CONFIG.DEFAULT_CATEGORY;
         const description = get('description');
         const rawId = get('id');
 
@@ -1201,7 +1350,7 @@
         if (!name && !region && !address && !url && !description) return null;
 
         const cafe = {
-          name: name || (region ? region + '的咖啡馆' : '未命名咖啡馆'),
+          name: name || (region ? region + '的咖啡馆' : CONFIG.FALLBACK_NAME),
           region: region,
           address: address,
           url: url,
@@ -1213,7 +1362,11 @@
         return cafe;
       }
 
-      /** 分类排序：中文优先，其后按本地化顺序 */
+      /**
+       * 分类排序：中文优先，其后按本地化顺序
+       * @param {string[]} cats
+       * @returns {string[]}
+       */
       function sortCategories(cats) {
         return cats.slice().sort(function (a, b) {
           const aCn = /^[\u4e00-\u9fa5]/.test(a);
@@ -1228,11 +1381,16 @@
         });
       }
 
-      /* =========================================================
-       * 6. 网络请求（超时 + 重试 + 绕过缓存）
-       * =======================================================*/
+      /* =====================================================================
+       * 7. 网络请求（超时 + 重试 + 绕过缓存）
+       * ===================================================================*/
 
-      /** 单次请求，带超时控制 */
+      /**
+       * 单次请求，带超时控制
+       * @param {string} url
+       * @param {number} timeout
+       * @returns {Promise<string>}
+       */
       function fetchText(url, timeout) {
         // 加时间戳 + cache: 'no-store' 双保险，绕过浏览器与中间层缓存
         const bust = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now();
@@ -1265,7 +1423,10 @@
         });
       }
 
-      /** 带重试的请求 */
+      /**
+       * 带重试的 CSV 拉取
+       * @returns {Promise<string>}
+       */
       async function fetchCsvWithRetry() {
         const total = CONFIG.RETRY + 1;
         let lastError = null;
@@ -1280,9 +1441,14 @@
         throw lastError || new Error('网络请求失败');
       }
 
-      /* =========================================================
-       * 7. CSV 文本缓存（localStorage）
-       * =======================================================*/
+      /* =====================================================================
+       * 8. CSV 文本缓存（localStorage）
+       * ===================================================================*/
+
+      /**
+       * 读取缓存的 CSV 文本
+       * @returns {{text:string, ts:number}|null}
+       */
       function readCsvCache() {
         try {
           const raw = localStorage.getItem(CONFIG.CACHE_KEY);
@@ -1295,37 +1461,93 @@
         return null;
       }
 
+      /**
+       * 写入 CSV 文本缓存
+       * @param {string} text
+       */
       function writeCsvCache(text) {
         try {
           localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ text: text, ts: Date.now() }));
         } catch (e) { /* 存储空间不足时忽略 */ }
       }
 
-      /* =========================================================
-       * 8. 数据应用
-       * =======================================================*/
+      /* =====================================================================
+       * 9. 数据应用 & 筛选
+       * ===================================================================*/
 
-      /** 把 CSV 文本解析并应用到 state，然后重新渲染 */
+      /**
+       * 计算当前数据的指纹（包含内容而非仅数量），用于判断后台刷新后是否有变化
+       * @returns {string}
+       */
+      function computeDataSignature() {
+        const parts = [String(state.allCafes.length)];
+        for (let i = 0; i < state.allCafes.length; i++) {
+          const c = state.allCafes[i];
+          parts.push(
+            c.id, c.name, c.region, c.address, c.category, c.description, c.url
+          );
+        }
+        return state.allCafes.length + '|' + fnv1a(parts.join('\u0001'));
+      }
+
+      /**
+       * 把 CSV 文本解析并应用到 state，然后重新渲染
+       * @param {string} text
+       * @throws {Error} 数据为空 / 表头无法识别时抛出
+       */
       function applyCsv(text) {
         const rows = parseCSV(text);
         if (rows.length < 2) throw new Error('CSV 数据为空或格式不正确');
 
         const cols = resolveColumns(rows[0]);
+        // 表头完全无法识别 → 直接报错，避免渲染出一堆「未命名咖啡馆」
+        if (cols.name === -1 && cols.region === -1 && cols.address === -1 &&
+            cols.url === -1 && cols.category === -1 && cols.description === -1) {
+          throw new Error('CSV 表头无法识别，请检查列名');
+        }
+
         const cafes = [];
+        const seenIds = new Map();   // id → 出现次数
+        const seenRows = new Set();  // 整行内容去重
+
         for (let i = 1; i < rows.length; i++) {
           const cafe = normalizeCafe(rows[i], cols);
-          if (cafe) cafes.push(cafe);
+          if (!cafe) continue;
+
+          // 内容完全相同的行只保留第一条
+          const rowKey = [
+            cafe.name, cafe.region, cafe.address,
+            cafe.url, cafe.category, cafe.description
+          ].join('\u0001');
+          if (seenRows.has(rowKey)) continue;
+          seenRows.add(rowKey);
+
+          // ID 去重：重复时追加 #n 后缀，保证卡片可独立操作
+          if (seenIds.has(cafe.id)) {
+            const n = seenIds.get(cafe.id) + 1;
+            seenIds.set(cafe.id, n);
+            cafe.id = cafe.id + '#' + n;
+          } else {
+            seenIds.set(cafe.id, 1);
+          }
+
+          cafes.push(cafe);
         }
+
         if (cafes.length === 0) throw new Error('未解析到有效的咖啡馆数据');
 
         state.allCafes = cafes;
         state.categories = sortCategories(
-          Array.from(new Set(cafes.map(function (c) { return c.category || '未分类'; })))
+          Array.from(new Set(cafes.map(function (c) {
+            return c.category || CONFIG.DEFAULT_CATEGORY;
+          })))
         );
+        state.dataSig = computeDataSignature();
 
         // 若当前分类在新数据中已不存在，则回退到「全部」（其余筛选状态保留）
-        if (state.currentCategory !== '__ALL__' && state.categories.indexOf(state.currentCategory) === -1) {
-          state.currentCategory = '__ALL__';
+        if (state.currentCategory !== CONFIG.ALL_CATEGORY &&
+            state.categories.indexOf(state.currentCategory) === -1) {
+          state.currentCategory = CONFIG.ALL_CATEGORY;
         }
 
         state.status = 'ready';
@@ -1333,24 +1555,19 @@
         renderList();
       }
 
-      /** 数据指纹，用于判断后台刷新后内容是否变化 */
-      function dataSignature() {
-        return state.allCafes.length + '|' +
-          state.allCafes.map(function (c) { return c.id; }).join(',');
-      }
-
-      /* =========================================================
-       * 9. 筛选
-       * =======================================================*/
+      /**
+       * 依据当前筛选条件得到咖啡馆列表
+       * @returns {Object[]}
+       */
       function getFilteredCafes() {
         let list = state.allCafes.slice();
 
         if (state.showFavoritesOnly) {
           list = list.filter(function (c) { return state.favorites.has(c.id); });
         }
-        if (state.currentCategory !== '__ALL__') {
+        if (state.currentCategory !== CONFIG.ALL_CATEGORY) {
           list = list.filter(function (c) {
-            return (c.category || '未分类') === state.currentCategory;
+            return (c.category || CONFIG.DEFAULT_CATEGORY) === state.currentCategory;
           });
         }
         const q = state.searchQuery.trim().toLowerCase();
@@ -1365,46 +1582,61 @@
         return list;
       }
 
-      /* =========================================================
-       * 10. 渲染
-       * =======================================================*/
+      /* =====================================================================
+       * 10. 视图层：状态栏 / 卡片 / 列表
+       * ===================================================================*/
 
-      /** 更新状态栏与筛选标签 */
+      /**
+       * 更新状态栏文案与筛选标签
+       * @param {number} count
+       */
       function updateStatusBar(count) {
         resultCount.textContent = '共 ' + count + ' 家咖啡馆';
 
         const parts = [];
         if (state.showFavoritesOnly) parts.push('❤️ 只看收藏');
-        if (state.currentCategory !== '__ALL__') parts.push('「' + state.currentCategory + '」');
+        if (state.currentCategory !== CONFIG.ALL_CATEGORY) parts.push('「' + state.currentCategory + '」');
         if (state.searchQuery.trim()) parts.push('搜索“' + state.searchQuery.trim() + '”');
         activeFilterLabel.textContent = parts.join(' · ');
 
         favFilterBtn.classList.toggle('active', state.showFavoritesOnly);
         favFilterBtn.textContent = state.showFavoritesOnly ? '❤️' : '🤍';
         favFilterBtn.setAttribute('aria-pressed', state.showFavoritesOnly ? 'true' : 'false');
+        favFilterBtn.setAttribute('aria-label', state.showFavoritesOnly ? '显示全部咖啡馆' : '只看收藏');
+        favFilterBtn.title = state.showFavoritesOnly ? '显示全部' : '只看收藏';
 
         clearFiltersBtn.hidden = parts.length === 0;
       }
 
-      /** 更新分类按钮文案 */
+      /** 更新分类按钮文案与高亮状态 */
       function updateCategoryBtnLabel() {
-        const isAll = state.currentCategory === '__ALL__';
+        const isAll = state.currentCategory === CONFIG.ALL_CATEGORY;
         categoryBtnLabel.textContent = isAll ? '分类' : state.currentCategory;
         categoryBtn.classList.toggle('active', !isAll);
       }
 
-      /** 生成 Google 地图导航地址 */
+      /**
+       * 生成 Google 地图导航地址
+       * @param {Object} cafe
+       * @returns {string}
+       */
       function buildMapUrl(cafe) {
         const address = (cafe.address || '').trim();
         const query = address || ((cafe.name || '') + ' ' + (cafe.region || '')).trim();
         return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
       }
 
-      /** 渲染单张卡片 */
+      /**
+       * 渲染单张卡片（返回 HTML 字符串）
+       * @param {Object} cafe
+       * @returns {string}
+       */
       function renderCard(cafe) {
         const isFav = state.favorites.has(cafe.id);
         const xhsUrl = sanitizeUrl(cafe.url);
-        const mapUrl = sanitizeUrl(buildMapUrl(cafe)) || 'https://www.google.com/maps';
+        const mapUrl = buildMapUrl(cafe);
+        const safeId = escapeHtml(cafe.id);
+        const safeName = escapeHtml(cafe.name);
 
         const regionTag = cafe.region
           ? '<span class="meta-tag region">📍 ' + escapeHtml(cafe.region) + '</span>'
@@ -1421,10 +1653,12 @@
           : '<span class="action-btn btn-xhs disabled" aria-disabled="true">📕 无链接</span>';
 
         return '' +
-          '<article class="cafe-card" data-id="' + escapeHtml(cafe.id) + '">' +
+          '<article class="cafe-card" data-id="' + safeId + '">' +
             '<div class="card-header">' +
-              '<h3 class="cafe-name">' + escapeHtml(cafe.name) + '</h3>' +
-              '<span class="fav-indicator' + (isFav ? ' active' : '') + '" aria-hidden="true">' + (isFav ? '❤️' : '🤍') + '</span>' +
+              '<h3 class="cafe-name">' + safeName + '</h3>' +
+              '<span class="fav-indicator' + (isFav ? ' active' : '') + '" aria-hidden="true">' +
+                (isFav ? '❤️' : '🤍') +
+              '</span>' +
             '</div>' +
             '<div class="card-meta">' + regionTag + catTag + '</div>' +
             '<p class="cafe-desc">' + desc + '</p>' +
@@ -1432,40 +1666,63 @@
               xhsBtn +
               '<a class="action-btn btn-map" href="' + escapeHtml(mapUrl) + '" target="_blank" rel="noopener noreferrer">🗺️ 导航</a>' +
               '<button class="action-btn btn-fav' + (isFav ? ' active' : '') + '" type="button" ' +
-                'data-id="' + escapeHtml(cafe.id) + '" ' +
+                'data-id="' + safeId + '" ' +
                 'aria-pressed="' + (isFav ? 'true' : 'false') + '" ' +
-                'aria-label="' + (isFav ? '取消收藏 ' : '收藏 ') + escapeHtml(cafe.name) + '">' +
+                'aria-label="' + (isFav ? '取消收藏 ' : '收藏 ') + safeName + '">' +
                 (isFav ? '❤️ 已藏' : '🤍 收藏') +
               '</button>' +
             '</div>' +
           '</article>';
       }
 
-      /** 空状态文案 */
+      /**
+       * 根据当前筛选状态生成空状态文案
+       * @returns {string}
+       */
       function getEmptyMessage() {
-        if (state.showFavoritesOnly && state.favorites.size === 0) return '还没有收藏任何咖啡馆，去逛逛吧～';
+        if (state.showFavoritesOnly && state.favorites.size === 0) {
+          return '还没有收藏任何咖啡馆，去逛逛吧～';
+        }
         if (state.showFavoritesOnly) return '当前筛选条件下没有收藏的咖啡馆';
         if (state.searchQuery.trim()) return '没有找到匹配的搜索结果';
-        if (state.currentCategory !== '__ALL__') return '「' + state.currentCategory + '」分类下暂无咖啡馆';
+        if (state.currentCategory !== CONFIG.ALL_CATEGORY) {
+          return '「' + state.currentCategory + '」分类下暂无咖啡馆';
+        }
         return '没有找到匹配的咖啡馆';
       }
 
+      /**
+       * 渲染空状态（带可选操作按钮）
+       * @param {string} msg
+       */
       function renderEmptyState(msg) {
-        mainContent.innerHTML =
-          '<div class="empty-state">' +
-            '<span class="emoji" aria-hidden="true">☕</span>' +
-            '<p>' + escapeHtml(msg) + '</p>' +
-          '</div>';
+        let html = '<div class="empty-state">' +
+          '<span class="emoji" aria-hidden="true">☕</span>' +
+          '<p>' + escapeHtml(msg) + '</p>';
+
+        if (hasActiveFilters()) {
+          html += '<button class="retry-btn" id="emptyResetBtn" type="button">清空筛选</button>';
+        }
+        html += '</div>';
+
+        mainContent.innerHTML = html;
+        lastRenderKey = null;
       }
 
+      /** 渲染加载中状态 */
       function showLoading() {
         mainContent.innerHTML =
           '<div class="loading-state">' +
             '<div class="loader"></div>' +
             '<p>正在读取咖啡馆数据…</p>' +
           '</div>';
+        lastRenderKey = null;
       }
 
+      /**
+       * 渲染错误状态
+       * @param {Error} err
+       */
       function showError(err) {
         mainContent.innerHTML =
           '<div class="empty-state">' +
@@ -1477,6 +1734,24 @@
         resultCount.textContent = '加载失败';
         activeFilterLabel.textContent = '';
         clearFiltersBtn.hidden = true;
+        lastRenderKey = null;
+      }
+
+      /**
+       * 计算本次渲染的缓存键（数据 + 筛选条件）
+       * @returns {string}
+       */
+      function computeRenderKey() {
+        const favPart = state.showFavoritesOnly
+          ? Array.from(state.favorites).sort().join(',')
+          : '';
+        return [
+          state.dataSig,
+          state.currentCategory,
+          state.searchQuery,
+          state.showFavoritesOnly ? '1' : '0',
+          favPart
+        ].join('\u0001');
       }
 
       /**
@@ -1497,10 +1772,15 @@
           return;
         }
 
+        // 内容与筛选条件都没变 → 跳过重绘
+        const renderKey = computeRenderKey();
+        if (renderKey === lastRenderKey) return;
+        lastRenderKey = renderKey;
+
         // 按分类分组
         const groups = new Map();
         filtered.forEach(function (cafe) {
-          const cat = (cafe.category || '未分类').trim() || '未分类';
+          const cat = (cafe.category || CONFIG.DEFAULT_CATEGORY).trim() || CONFIG.DEFAULT_CATEGORY;
           if (!groups.has(cat)) groups.set(cat, []);
           groups.get(cat).push(cafe);
         });
@@ -1509,6 +1789,7 @@
         const useGrid = catNames.length <= 1;
         const containerClass = useGrid ? 'card-grid' : 'card-scroll';
 
+        // 一次性拼装，一次性写入（避免多次重排）
         let html = '';
         catNames.forEach(function (cat) {
           const list = groups.get(cat);
@@ -1526,14 +1807,17 @@
         mainContent.innerHTML = html;
       }
 
-      /* =========================================================
+      /* =====================================================================
        * 11. 分类下拉面板
-       * =======================================================*/
+       * ===================================================================*/
+
+      /** 渲染分类下拉选项 */
       function renderCategoryOptions() {
         let html = '';
-        const allActive = state.currentCategory === '__ALL__';
+        const allActive = state.currentCategory === CONFIG.ALL_CATEGORY;
         html +=
-          '<button class="cat-option' + (allActive ? ' active' : '') + '" type="button" data-cat="__ALL__" role="menuitem">' +
+          '<button class="cat-option' + (allActive ? ' active' : '') + '" type="button" ' +
+            'data-cat="' + CONFIG.ALL_CATEGORY + '" role="menuitem">' +
             '<span>全部</span><span class="check">' + (allActive ? '✓' : '') + '</span>' +
           '</button>';
 
@@ -1550,11 +1834,12 @@
         categoryDropdown.innerHTML = html;
       }
 
+      /** 打开分类下拉，并把焦点放到当前选中项 */
       function openCategoryDropdown() {
         renderCategoryOptions();
         categoryDropdown.classList.add('open');
         categoryBtn.setAttribute('aria-expanded', 'true');
-        // 打开后聚焦到当前选中项，便于键盘操作
+
         const active = categoryDropdown.querySelector('.cat-option.active') ||
                        categoryDropdown.querySelector('.cat-option');
         if (active) {
@@ -1562,26 +1847,38 @@
         }
       }
 
+      /** 关闭分类下拉 */
       function closeCategoryDropdown() {
         categoryDropdown.classList.remove('open');
         categoryBtn.setAttribute('aria-expanded', 'false');
       }
 
+      /** @returns {boolean} 下拉是否展开 */
       function isDropdownOpen() {
         return categoryDropdown.classList.contains('open');
       }
 
+      /**
+       * 选择分类
+       * @param {string} cat
+       */
       function selectCategory(cat) {
-        state.currentCategory = cat || '__ALL__';
+        state.currentCategory = cat || CONFIG.ALL_CATEGORY;
         closeCategoryDropdown();
         updateCategoryBtnLabel();
         renderCategoryOptions();
         renderList();
+        try { categoryBtn.focus({ preventScroll: true }); } catch (e) { categoryBtn.focus(); }
       }
 
-      /** 下拉面板内的键盘导航 */
+      /**
+       * 下拉面板内的键盘导航（方向键 / Home / End）
+       * @param {KeyboardEvent} e
+       */
       function handleDropdownKeydown(e) {
-        const options = Array.prototype.slice.call(categoryDropdown.querySelectorAll('.cat-option'));
+        const options = Array.prototype.slice.call(
+          categoryDropdown.querySelectorAll('.cat-option')
+        );
         if (!options.length) return;
         const currentIdx = options.indexOf(document.activeElement);
 
@@ -1592,7 +1889,8 @@
             break;
           case 'ArrowUp':
             e.preventDefault();
-            options[currentIdx < 0 ? options.length - 1 : (currentIdx - 1 + options.length) % options.length].focus();
+            options[currentIdx < 0 ? options.length - 1 :
+              (currentIdx - 1 + options.length) % options.length].focus();
             break;
           case 'Home':
             e.preventDefault();
@@ -1607,17 +1905,20 @@
         }
       }
 
-      /* =========================================================
-       * 12. 收藏（局部更新，不整页重绘）
-       * =======================================================*/
+      /* =====================================================================
+       * 12. 收藏交互（局部更新，不整页重绘）
+       * ===================================================================*/
 
-      /** 按 ID 找到卡片 DOM */
+      /**
+       * 按 ID 找到卡片 DOM
+       * @param {string} id
+       * @returns {Element|null}
+       */
       function findCard(id) {
         if (!id) return null;
         try {
           return mainContent.querySelector('.cafe-card[data-id="' + cssEscape(id) + '"]');
         } catch (e) {
-          // 兜底：遍历查找
           const nodes = mainContent.querySelectorAll('.cafe-card');
           for (let i = 0; i < nodes.length; i++) {
             if (nodes[i].getAttribute('data-id') === id) return nodes[i];
@@ -1626,7 +1927,11 @@
         }
       }
 
-      /** 只更新一张卡片的收藏相关 UI */
+      /**
+       * 只更新一张卡片的收藏相关 UI
+       * @param {Element|null} card
+       * @param {boolean} isFav
+       */
       function updateCardFavUI(card, isFav) {
         if (!card) return;
         const btn = card.querySelector('.btn-fav');
@@ -1634,6 +1939,9 @@
           btn.classList.toggle('active', isFav);
           btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
           btn.textContent = isFav ? '❤️ 已藏' : '🤍 收藏';
+          const nameEl = card.querySelector('.cafe-name');
+          const name = nameEl ? nameEl.textContent : '';
+          btn.setAttribute('aria-label', (isFav ? '取消收藏 ' : '收藏 ') + name);
         }
         const ind = card.querySelector('.fav-indicator');
         if (ind) {
@@ -1642,7 +1950,10 @@
         }
       }
 
-      /** 从 DOM 中淡出移除一张卡片（只看收藏模式下取消收藏时使用） */
+      /**
+       * 从 DOM 中淡出移除一张卡片（只看收藏模式下取消收藏时使用）
+       * @param {Element} card
+       */
       function removeCardFromDom(card) {
         if (!card) return;
         const group = closestFrom(card, '.category-group');
@@ -1658,10 +1969,14 @@
           if (!mainContent.querySelector('.cafe-card')) {
             renderEmptyState(getEmptyMessage());
           }
-        }, 180);
+          lastRenderKey = null;
+        }, CONFIG.REMOVE_ANIM_DURATION);
       }
 
-      /** 切换收藏状态 */
+      /**
+       * 切换收藏状态
+       * @param {string} id
+       */
       function toggleFavorite(id) {
         if (!id) return;
         const willFav = !state.favorites.has(id);
@@ -1681,29 +1996,41 @@
         showToast(willFav ? '已添加到收藏 ❤️' : '已取消收藏');
       }
 
-      /* =========================================================
+      /* =====================================================================
        * 13. 随机选一家
-       * =======================================================*/
+       * ===================================================================*/
+
+      /**
+       * 平滑滚动到指定卡片
+       * @param {Element} card
+       */
       function scrollToCard(card) {
-        if (card && typeof card.scrollIntoView === 'function') {
-          try {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-          } catch (e) {
-            // 旧浏览器不支持 options 参数
-            card.scrollIntoView();
-          }
+        if (!card || typeof card.scrollIntoView !== 'function') return;
+        if (prefersReducedMotion) {
+          card.scrollIntoView();
+          return;
+        }
+        try {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        } catch (e) {
+          card.scrollIntoView();
         }
       }
 
+      /**
+       * 给卡片加上短暂的高亮
+       * @param {Element} card
+       */
       function highlightCard(card) {
         if (!card) return;
         card.classList.add('highlight');
         if (card._highlightTimer) clearTimeout(card._highlightTimer);
         card._highlightTimer = setTimeout(function () {
           card.classList.remove('highlight');
-        }, 1600);
+        }, CONFIG.HIGHLIGHT_DURATION);
       }
 
+      /** 在筛选结果中随机挑一家并高亮 */
       function pickRandom() {
         const filtered = getFilteredCafes();
         if (filtered.length === 0) {
@@ -1719,11 +2046,14 @@
         showToast('🎲 随机选中：' + cafe.name);
       }
 
-      /* =========================================================
+      /* =====================================================================
        * 14. 数据加载 / 刷新
-       * =======================================================*/
+       * ===================================================================*/
 
-      /** 刷新按钮的加载态 */
+      /**
+       * 刷新按钮的加载态
+       * @param {boolean} loading
+       */
       function setRefreshLoading(loading) {
         refreshBtn.disabled = !!loading;
         refreshBtn.classList.toggle('refreshing', !!loading);
@@ -1733,9 +2063,8 @@
       }
 
       /**
-       * 从网络拉取最新数据并应用。
-       * @param {Object} opts
-       * @param {boolean} opts.manual 是否用户手动点击刷新（决定 Toast 文案）
+       * 从网络拉取最新数据并应用
+       * @param {{manual?: boolean}} [opts]
        */
       async function refreshFromNetwork(opts) {
         const manual = !!(opts && opts.manual);
@@ -1745,7 +2074,7 @@
         setRefreshLoading(true);
 
         const hadData = state.allCafes.length > 0;
-        const beforeSig = hadData ? dataSignature() : '';
+        const beforeSig = hadData ? state.dataSig : '';
 
         // 没有任何数据时，展示加载中
         if (!hadData) {
@@ -1763,35 +2092,38 @@
 
           if (manual) {
             showToast('已刷新 ☕');
-          } else if (hadData && beforeSig !== dataSignature()) {
+          } else if (hadData && beforeSig !== state.dataSig) {
             showToast('数据已更新');
           }
         } catch (err) {
           console.error('加载数据失败:', err);
           if (!hadData) {
-            // 完全没有数据可展示 → 显示错误页 + 重新加载按钮
             state.status = 'error';
             showError(err);
-          } else {
+          } else if (manual) {
             // 已有数据（缓存或旧数据）→ 保留页面，不清空
-            if (manual) showToast('刷新失败，已保留原数据');
-            // 后台自动刷新失败时静默处理，不打扰用户
+            showToast('刷新失败，已保留原数据');
           }
+          // 后台自动刷新失败时静默处理，不打扰用户
         } finally {
           state.isRefreshing = false;
           setRefreshLoading(false);
         }
       }
 
-      /* =========================================================
-       * 15. 事件绑定（全部使用事件委托 / 只绑定一次）
-       * =======================================================*/
+      /* =====================================================================
+       * 15. 事件绑定
+       * ===================================================================*/
       function bindEvents() {
 
         /* ---- 搜索：兼容中文输入法，输入过程中不触发渲染 ---- */
         let composing = false;
         let searchTimer = null;
 
+        /**
+         * 防抖触发搜索
+         * @param {string} value
+         */
         function scheduleSearch(value) {
           clearTimeout(searchTimer);
           searchTimer = setTimeout(function () {
@@ -1801,14 +2133,21 @@
           }, CONFIG.SEARCH_DEBOUNCE);
         }
 
+        /** 同步搜索清空按钮的显隐 */
+        function updateSearchClear() {
+          searchClearBtn.hidden = searchInput.value.length === 0;
+        }
+
         searchInput.addEventListener('compositionstart', function () {
           composing = true;
         });
         searchInput.addEventListener('compositionend', function () {
           composing = false;
+          updateSearchClear();
           scheduleSearch(searchInput.value);
         });
         searchInput.addEventListener('input', function () {
+          updateSearchClear();
           // 拼音输入过程中不渲染，避免频繁重排
           if (composing) return;
           scheduleSearch(searchInput.value);
@@ -1821,14 +2160,27 @@
           }
         });
 
-        /* ---- 主内容区事件委托：收藏按钮 + 重试按钮 ---- */
+        /* ---- 搜索清空 ---- */
+        searchClearBtn.addEventListener('click', function () {
+          searchInput.value = '';
+          state.searchQuery = '';
+          updateSearchClear();
+          renderList();
+          searchInput.focus();
+        });
+
+        /* ---- 主内容区事件委托：收藏按钮 / 重试按钮 / 空状态清空按钮 ---- */
         mainContent.addEventListener('click', function (e) {
           const target = e.target;
           if (!target || target.nodeType !== 1) return;
 
-          const retry = closestFrom(target, '#retryBtn');
-          if (retry) {
+          if (closestFrom(target, '#retryBtn')) {
             refreshFromNetwork({ manual: true });
+            return;
+          }
+
+          if (closestFrom(target, '#emptyResetBtn')) {
+            resetAllFilters();
             return;
           }
 
@@ -1846,7 +2198,6 @@
           selectCategory(opt.getAttribute('data-cat'));
         });
 
-        // 下拉键盘导航
         categoryDropdown.addEventListener('keydown', handleDropdownKeydown);
 
         categoryBtn.addEventListener('click', function (e) {
@@ -1881,23 +2232,14 @@
           showToast(state.showFavoritesOnly ? '只看收藏' : '显示全部');
         });
 
-        /* ---- 新增：刷新按钮 ---- */
+        /* ---- 刷新按钮 ---- */
         refreshBtn.addEventListener('click', function () {
           if (state.isRefreshing) return;
           refreshFromNetwork({ manual: true });
         });
 
-        /* ---- 新增：清空筛选 ---- */
-        clearFiltersBtn.addEventListener('click', function () {
-          state.searchQuery = '';
-          state.currentCategory = '__ALL__';
-          state.showFavoritesOnly = false;
-          searchInput.value = '';
-          updateCategoryBtnLabel();
-          renderCategoryOptions();
-          renderList();
-          showToast('已清空筛选');
-        });
+        /* ---- 清空筛选 ---- */
+        clearFiltersBtn.addEventListener('click', resetAllFilters);
 
         /* ---- 滚动：返回顶部 & 头部阴影（rAF 节流） ---- */
         let ticking = false;
@@ -1916,6 +2258,10 @@
 
         /* ---- 返回顶部 ---- */
         backTopBtn.addEventListener('click', function () {
+          if (prefersReducedMotion) {
+            window.scrollTo(0, 0);
+            return;
+          }
           try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } catch (e) {
@@ -1924,13 +2270,27 @@
         });
       }
 
-      /* =========================================================
+      /** 重置全部筛选条件 */
+      function resetAllFilters() {
+        state.searchQuery = '';
+        state.currentCategory = CONFIG.ALL_CATEGORY;
+        state.showFavoritesOnly = false;
+        searchInput.value = '';
+        searchClearBtn.hidden = true;
+        updateCategoryBtnLabel();
+        renderCategoryOptions();
+        renderList();
+        showToast('已清空筛选');
+      }
+
+      /* =====================================================================
        * 16. 初始化
-       * =======================================================*/
+       * ===================================================================*/
       function init() {
         state.favorites = loadFavorites();
         bindEvents();
         updateCategoryBtnLabel();
+        searchClearBtn.hidden = true;
 
         // 1) 优先展示本地缓存的 CSV，保证首屏秒开
         const cached = readCsvCache();
